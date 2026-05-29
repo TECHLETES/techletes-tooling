@@ -1,0 +1,13 @@
+{
+  "proxy": {
+    "listen_host": "0.0.0.0",
+    "listen_port": 8655,
+    "hermes_gateway_url": "http://localhost:8644/webhooks/github-mentions",
+    "hermes_secret": "<same secret as Hermes webhook config>"
+  },
+  "allowed_users": [
+    "thom-techlete"
+  ],
+  "event_auth": {}
+}
+
