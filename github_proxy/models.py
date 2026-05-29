@@ -54,9 +54,11 @@ class IncomingGitHubEvent(BaseModel):
     comment_user: str | None = None
     issue_number: int | None = None
     issue_title: str | None = None
+    issue_body: str | None = None
     issue_html_url: str | None = None
     pr_number: int | None = None
     pr_title: str | None = None
+    pr_body: str | None = None
     pr_html_url: str | None = None
 
     @classmethod
@@ -82,9 +84,11 @@ class IncomingGitHubEvent(BaseModel):
             comment_user=(comment.get("user") or {}).get("login"),
             issue_number=issue.get("number"),
             issue_title=issue.get("title"),
+            issue_body=issue.get("body"),
             issue_html_url=issue.get("html_url"),
             pr_number=pull_request.get("number"),
             pr_title=pull_request.get("title"),
+            pr_body=pull_request.get("body"),
             pr_html_url=pull_request.get("html_url"),
         )
 

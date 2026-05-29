@@ -86,14 +86,16 @@ async def github_webhook(request_: Request) -> JSONResponse:
             logger.info("Blocked %s for %s", sender_login, event_name)
             return JSONResponse({"status": "ok"})
 
-        # Only forward if the bot was actually @mentioned in the comment
+        # Only forward if the bot was actually @mentioned
         bot_username = "Techletes-bot"
-        mention_found = False
-        if event.comment_body and f"@{bot_username}" in event.comment_body:
-            mention_found = True
-        # Some events use the issue/PR body instead
-        if event.issue_title and f"@{bot_username}" in event.issue_title:
-            mention_found = True
+        at_mention = f"@{bot_username}"
+        mention_found = bool(
+            (event.comment_body and at_mention in event.comment_body)
+            or (event.issue_title and at_mention in event.issue_title)
+            or (event.issue_body and at_mention in event.issue_body)
+            or (event.pr_title and at_mention in event.pr_title)
+            or (event.pr_body and at_mention in event.pr_body)
+        )
 
         if not mention_found:
             logger.info("Skipped %s from %s (no @mention of %s)", event_name, sender_login, bot_username)
