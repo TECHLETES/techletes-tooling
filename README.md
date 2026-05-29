@@ -60,3 +60,59 @@ repos:
 ```
 
 If you are working from a local checkout instead of a published Git repo, use a local path-based `repo: local` entry that runs the same command.
+
+### GitHub Webhook Auth Proxy
+
+This repository now includes a standalone ASGI proxy that authorizes GitHub webhooks before forwarding them to a Hermes gateway.
+
+Build dependencies:
+
+```bash
+pip install fastapi uvicorn
+```
+
+If you are using `uv`, the equivalent is:
+
+```bash
+uv add fastapi uvicorn
+```
+
+Create `~/.hermes/github-webhook-proxy.json` from `config/github-proxy.yaml.example`.
+
+Run the proxy directly:
+
+```bash
+python -m uvicorn github_proxy.main:app --host 0.0.0.0 --port 8655
+```
+
+Or use the launcher script:
+
+```bash
+bash scripts/github-proxy.sh
+```
+
+Example systemd unit:
+
+```ini
+[Unit]
+Description=GitHub Webhook Authorization Proxy
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/techadmin/work/repos/techletes-tooling
+Environment=GITHUB_PROXY_HOST=0.0.0.0
+Environment=GITHUB_PROXY_PORT=8655
+ExecStart=/home/techadmin/work/repos/techletes-tooling/scripts/github-proxy.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Test the local health endpoint:
+
+```bash
+curl -X POST http://localhost:8655/health
+```
