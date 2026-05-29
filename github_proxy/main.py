@@ -86,8 +86,21 @@ async def github_webhook(request_: Request) -> JSONResponse:
             logger.info("Blocked %s for %s", sender_login, event_name)
             return JSONResponse({"status": "ok"})
 
+        # Only forward if the bot was actually @mentioned in the comment
+        bot_username = "Techletes-bot"
+        mention_found = False
+        if event.comment_body and f"@{bot_username}" in event.comment_body:
+            mention_found = True
+        # Some events use the issue/PR body instead
+        if event.issue_title and f"@{bot_username}" in event.issue_title:
+            mention_found = True
+
+        if not mention_found:
+            logger.info("Skipped %s from %s (no @mention of %s)", event_name, sender_login, bot_username)
+            return JSONResponse({"status": "ok"})
+
         unified_payload = build_unified_payload(event)
-        forwarded = forward_to_hermes(unified_payload, settings.hermes_gateway_url, settings.hermes_secret)
+        forwarded = forward_to_hermes(unified_payload, settings.hermes_gateway_url, settings.hermes_secret, event_name)
         if forwarded:
             logger.info("Forwarded %s from %s", event_name, sender_login)
         else:
