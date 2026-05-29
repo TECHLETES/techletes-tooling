@@ -19,6 +19,8 @@ from .models import IncomingGitHubEvent
 
 logger = logging.getLogger(__name__)
 
+ALLOWED_EVENTS = {"issue_comment", "pull_request_review_comment", "commit_comment"}
+
 app = FastAPI(title="GitHub Webhook Authorization Proxy")
 app.state.settings = None
 
@@ -67,6 +69,11 @@ async def github_webhook(request_: Request) -> JSONResponse:
 
         if not verify_signature(raw_body, signature_header, settings.hermes_secret):
             logger.warning("Rejected webhook with invalid signature for event=%s", event_name)
+            return JSONResponse({"status": "ok"})
+
+        # Only process allowed GitHub event types
+        if event_name not in ALLOWED_EVENTS:
+            logger.info("Rejected event type %s (not in allowed list)", event_name)
             return JSONResponse({"status": "ok"})
 
         try:

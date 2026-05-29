@@ -67,8 +67,8 @@ def build_unified_payload(event: IncomingGitHubEvent) -> dict[str, Any]:
 
     dump = getattr(payload, "model_dump", None)
     if callable(dump):
-        return dump(exclude_none=True)
-    return payload.dict(exclude_none=True)
+        return dump()
+    return payload.dict()
 
 
 def forward_to_hermes(payload: dict[str, Any], hermes_url: str, secret: str, event_name: str = "unknown") -> bool:
