@@ -71,8 +71,8 @@ def build_unified_payload(event: IncomingGitHubEvent) -> dict[str, Any]:
     return payload.dict(exclude_none=True)
 
 
-def forward_to_hermes(payload: dict[str, Any], hermes_url: str, secret: str) -> bool:
-    """POST payload to Hermes with an HMAC signature."""
+def forward_to_hermes(payload: dict[str, Any], hermes_url: str, secret: str, event_name: str = "unknown") -> bool:
+    """POST payload to Hermes with an HMAC signature and the original event type."""
 
     body = json.dumps(payload, separators=(",", ":"), sort_keys=True).encode("utf-8")
     signature = hmac.new(secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
@@ -84,6 +84,7 @@ def forward_to_hermes(payload: dict[str, Any], hermes_url: str, secret: str) -> 
         headers={
             "Content-Type": "application/json",
             "X-Hub-Signature-256": f"sha256={signature}",
+            "X-GitHub-Event": event_name,
         },
     )
 
