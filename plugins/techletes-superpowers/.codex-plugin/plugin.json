@@ -5,7 +5,7 @@
     "url": "https://techletes.ai"
   },
   "description": "Techletes' agentic software development workflow framework: lean planning, pragmatic implementation, TDD where useful, debugging, review, and delivery workflows for coding agents.",
-  "homepage": "https://github.com/TECHLETES/python_template",
+  "homepage": "https://github.com/TECHLETES/techletes-tooling",
   "hooks": {},
   "interface": {
     "brandColor": "#111827",
@@ -30,7 +30,7 @@
     "screenshots": [],
     "shortDescription": "Lean planning, implementation, debugging, review, and delivery workflows for coding agents",
     "termsOfServiceURL": "https://techletes.ai/terms",
-    "websiteURL": "https://github.com/TECHLETES/python_template"
+    "websiteURL": "https://github.com/TECHLETES/techletes-tooling"
   },
   "keywords": [
     "agent-workflows",
@@ -46,7 +46,7 @@
   ],
   "license": "MIT",
   "name": "techletes-superpowers",
-  "repository": "https://github.com/TECHLETES/python_template",
+  "repository": "https://github.com/TECHLETES/techletes-tooling",
   "skills": "./skills/",
-  "version": "0.1.0"
+  "version": "0.1.1"
 }
