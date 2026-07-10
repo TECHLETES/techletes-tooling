@@ -1,6 +1,5 @@
 # Notice
 
-This plugin is inspired by and/or adapted from Superpowers by Jesse Vincent:
-https://github.com/obra/superpowers
+This plugin is inspired by and/or adapted from [Superpowers](https://github.com/obra/superpowers) by Jesse Vincent:
 
 Original project license: MIT.
