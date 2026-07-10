@@ -31,8 +31,9 @@ failures rather than bypassing them.
    package layout, test command, deployment workflows, and secret-scan command.
 2. Require a clean working tree: `git status --short` must be empty. Do not
    stash, reset, or discard the user's work.
-3. Confirm the repository is not already based on a current template baseline.
-   If it is, use the update path below instead of a first-adoption merge.
+3. Confirm whether the repository is already based on a current template
+   baseline. If it is, skip first adoption entirely and use only the update
+   path below to merge the latest template version into the repo.
 4. Record the current branch and commit so the migration can be reviewed and
    safely abandoned without destructive Git commands.
 
@@ -115,7 +116,6 @@ For an existing `template` remote:
 git switch -c chore/update-python-template
 git fetch template
 git merge template/main --no-commit
-uv run python scripts/adopt-template.py
 uv lock
 uv sync
 uv run pre-commit run --all-files
@@ -123,6 +123,10 @@ uv run pre-commit run --all-files
 
 Repeat the devcontainer and test checks. Review the diff for template drift; do
 not resolve recurring conflicts by blindly taking either side.
+
+If the repository is already adopted and only needs a template refresh, do not
+run the first-adoption helper or recreate the full setup path. Limit the work to
+merging the latest template changes and reconciling the resulting diff.
 
 ## Completion Evidence
 
