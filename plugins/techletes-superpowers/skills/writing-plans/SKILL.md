@@ -1,13 +1,15 @@
 ---
 name: writing-plans
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when requirements describe multiple dependent implementation steps, cross-cutting changes, or work whose sequence and verification need to be coordinated
 ---
 
 # Writing Plans
 
 ## Overview
 
-Write comprehensive implementation plans assuming the engineer has zero context for our codebase and questionable taste. Document everything they need to know: which files to touch for each task, code, testing, docs they might need to check, how to test it. Give them the whole plan as bite-sized tasks. DRY. YAGNI. TDD. Frequent commits.
+Write implementation plans for work where sequencing and coordination reduce risk. Keep the plan proportional to the task; a plan is not required for a one-file, one-command, or otherwise obvious change.
+
+Document the files, interfaces, tests, and commands that another engineer needs. DRY. YAGNI. TDD where the behavior warrants it.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
@@ -20,7 +22,7 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 ## Scope Check
 
-If the spec covers multiple independent subsystems, it should have been broken into sub-project specs during brainstorming. If it wasn't, suggest breaking this into separate plans — one per subsystem. Each plan should produce working, testable software on its own.
+If the requirements cover multiple independent subsystems, split them only when doing so improves delivery or review. Do not create a spec/plan decomposition for a small cohesive change.
 
 ## File Structure
 
@@ -44,7 +46,7 @@ independently testable deliverable.
 
 ## Bite-Sized Task Granularity
 
-**Each step is one action (2-5 minutes):**
+For plans that are justified, each step should be one reviewable action (roughly 2-15 minutes):
 - "Write the failing test" - step
 - "Run it to make sure it fails" - step
 - "Implement the minimal code to make the test pass" - step

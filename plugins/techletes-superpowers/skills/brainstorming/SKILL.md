@@ -1,25 +1,25 @@
 ---
 name: brainstorming
-description: "You MUST use this before any creative work - creating features, building components, adding functionality, or modifying behavior. Explores user intent, requirements and design before implementation."
+description: "Use when a request has unresolved product, UX, architecture, or scope decisions that materially affect the implementation"
 ---
 
 # Brainstorming Ideas Into Designs
 
-Help turn ideas into fully formed designs and specs through natural collaborative dialogue.
+Help turn ambiguous or consequential ideas into focused designs. Do not use this as a mandatory preamble for clear, localized implementation work.
 
 Start by understanding the current project context, then ask questions one at a time to refine the idea. Once you understand what you're building, present the design and get user approval.
 
 <HARD-GATE>
-Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
+Use this gate only when important design decisions are unresolved or the requested work is creative, cross-cutting, or difficult to reverse. For a clear, small change, skip this skill and implement directly.
 </HARD-GATE>
 
-## Anti-Pattern: "This Is Too Simple To Need A Design"
+## Anti-Pattern: "Everything Needs A Design"
 
-Every project goes through this process. A todo list, a single-function utility, a config change — all of them. "Simple" projects are where unexamined assumptions cause the most wasted work. The design can be short (a few sentences for truly simple projects), but you MUST present it and get approval.
+Do not create a design ceremony for a typo, isolated configuration change, one-file fix, routine dependency update, or other well-specified low-risk task. A short design is appropriate only when it resolves a real decision.
 
 ## Checklist
 
-You MUST create a task for each of these items and complete them in order:
+For qualifying work, use these steps as a menu in order and stop once the design is clear enough to implement safely:
 
 1. **Explore project context** — check files, docs, recent commits
 2. **Offer the visual companion just-in-time** — NOT upfront. The first time a question would genuinely be clearer shown than described, offer it then (its own message); on approval its browser tab opens for you. If no visual question ever arises, never offer it. See the Visual Companion section below.
@@ -58,7 +58,7 @@ digraph brainstorming {
 }
 ```
 
-**The terminal state is invoking writing-plans.** Do NOT invoke frontend-design, mcp-builder, or any other implementation skill. The ONLY skill you invoke after brainstorming is writing-plans.
+Once the design is clear, either implement directly if the remaining work is small or invoke `writing-plans` if sequencing and coordination still warrant it. Do not invoke unrelated skills automatically.
 
 ## The Process
 
@@ -101,15 +101,15 @@ digraph brainstorming {
 
 ## After the Design
 
-**Documentation:**
+**Documentation for consequential work:**
 
-- Write the validated design (spec) to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md`
+- Write the validated design to `docs/superpowers/specs/YYYY-MM-DD-<topic>-design.md` when it will be reused, reviewed separately, or guide multi-step implementation. For smaller qualifying work, keep the design in the conversation or task notes.
   - (User preferences for spec location override this default)
 - Use elements-of-style:writing-clearly-and-concisely skill if available
-- Commit the design document to git
+- Commit the design document when the repository workflow calls for committed planning artifacts.
 
 **Spec Self-Review:**
-After writing the spec document, look at it with fresh eyes:
+If a spec document was written, look at it with fresh eyes:
 
 1. **Placeholder scan:** Any "TBD", "TODO", incomplete sections, or vague requirements? Fix them.
 2. **Internal consistency:** Do any sections contradict each other? Does the architecture match the feature descriptions?
@@ -118,17 +118,16 @@ After writing the spec document, look at it with fresh eyes:
 
 Fix any issues inline. No need to re-review — just fix and move on.
 
-**User Review Gate:**
-After the spec review loop passes, ask the user to review the written spec before proceeding:
+**User Review:**
+For a committed spec that will drive multi-step work, ask the user to review it before proceeding:
 
 > "Spec written and committed to `<path>`. Please review it and let me know if you want to make any changes before we start writing out the implementation plan."
 
-Wait for the user's response. If they request changes, make them and re-run the spec review loop. Only proceed once the user approves.
+If they request changes, make them and re-run the spec review loop. Do not pause for a separate document review when the design is already approved and the remaining work is small.
 
 **Implementation:**
 
-- Invoke the writing-plans skill to create a detailed implementation plan
-- Do NOT invoke any other skill. writing-plans is the next step.
+- If the design leaves multiple dependent implementation steps, invoke the writing-plans skill. Otherwise begin the minimal implementation and verification workflow.
 
 ## Key Principles
 
