@@ -46,6 +46,7 @@ git switch -c chore/adopt-python-template
 template_url="$(git remote get-url template 2>/dev/null || true)"
 if [ -z "$template_url" ]; then
   git remote add template git@github.com:TECHLETES/python_template.git
+  git remote set-url --push template DISABLED
 elif [ "$template_url" != "git@github.com:TECHLETES/python_template.git" ]; then
   echo "template remote points to an unexpected URL: $template_url" >&2
   exit 1
