@@ -9,12 +9,30 @@ Execute plan by dispatching a fresh implementer subagent per task, a task review
 
 **Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
 
-**Core principle:** Fresh subagent per task + task review (spec + quality) + broad final review = high quality, fast iteration
+**Core principle:** Explicit user consent first, then fresh subagent per task + task review (spec + quality) + broad final review = high quality, fast iteration
 
 **Narration:** between tool calls, narrate at most one short line — the
 ledger and the tool results carry the record.
 
-**Continuous execution:** Do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
+**Continuous execution after confirmation:** Once the user has explicitly approved Subagent-Driven Development, do not pause to check in with your human partner between tasks. Execute all tasks from the plan without stopping. The only reasons to stop are: BLOCKED status you cannot resolve, ambiguity that genuinely prevents progress, or all tasks complete. "Should I continue?" prompts and progress summaries waste their time — they asked you to execute the plan, so execute it.
+
+
+## Mandatory User Confirmation
+
+Before starting Subagent-Driven Development, always ask the user whether they want to use it for the current implementation plan. Do not dispatch any implementer, reviewer, fixer, or other subagent until the user explicitly confirms.
+
+Use a direct question such as:
+
+> This plan is suitable for Subagent-Driven Development. Should I use subagents to execute it?
+
+Rules:
+
+- Consent is required for each new plan or implementation request.
+- Do not infer consent from the existence of a plan, prior use of this skill, or a general preference for subagents.
+- Do not start pre-flight execution, create subagent task briefs, or dispatch any subagent before confirmation.
+- Reading the plan only to determine whether this skill is suitable is allowed before confirmation.
+- If the user declines or does not explicitly confirm, continue manually or use another appropriate workflow.
+- Once confirmed, execute continuously according to this skill without asking for confirmation between tasks.
 
 ## When to Use
 
@@ -60,11 +78,15 @@ digraph process {
         "Mark task complete in todo list and progress ledger" [shape=box];
     }
 
+    "Ask user for explicit confirmation" [shape=diamond];
     "Read plan, note context and global constraints, create todos" [shape=box];
     "More tasks remain?" [shape=diamond];
     "Dispatch final code reviewer subagent (../requesting-code-review/code-reviewer.md)" [shape=box];
     "Use techletes-superpowers:finishing-a-development-branch" [shape=box style=filled fillcolor=lightgreen];
+    "Manual execution or another workflow" [shape=box];
 
+    "Ask user for explicit confirmation" -> "Read plan, note context and global constraints, create todos" [label="yes"];
+    "Ask user for explicit confirmation" -> "Manual execution or another workflow" [label="no"];
     "Read plan, note context and global constraints, create todos" -> "Dispatch implementer subagent (./implementer-prompt.md)";
     "Dispatch implementer subagent (./implementer-prompt.md)" -> "Implementer subagent asks questions?";
     "Implementer subagent asks questions?" -> "Answer questions, provide context" [label="yes"];
@@ -84,7 +106,7 @@ digraph process {
 
 ## Pre-Flight Plan Review
 
-Before dispatching Task 1, scan the plan once for conflicts:
+After the user explicitly confirms this workflow, and before dispatching Task 1, scan the plan once for conflicts:
 
 - tasks that contradict each other or the plan's Global Constraints
 - anything the plan explicitly mandates that the review rubric treats as a
@@ -272,6 +294,10 @@ a ledger file, not only in todos.
 ## Example Workflow
 
 ```
+You: This plan is suitable for Subagent-Driven Development. Should I use subagents to execute it?
+
+Human: Yes.
+
 You: I'm using Subagent-Driven Development to execute this plan.
 
 [Read plan file once: docs/superpowers/plans/feature-plan.md]
@@ -367,6 +393,8 @@ Done!
 ## Red Flags
 
 **Never:**
+- Start or dispatch Subagent-Driven Development without explicit user confirmation for the current plan
+- Treat prior consent, a saved preference, or the existence of a plan as consent for a new run
 - Start implementation on main/master branch without explicit user consent
 - Skip task review, or accept a report missing either verdict (spec compliance AND task quality are both required)
 - Proceed with unfixed issues
