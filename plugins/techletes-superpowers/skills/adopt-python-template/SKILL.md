@@ -26,7 +26,7 @@ template/main
 chore/template-sync
       | squash PR
       v
-staging
+integration branch
       | merge back after squash
       v
 chore/template-sync
@@ -35,17 +35,13 @@ chore/template-sync
 Never merge template updates from a developer feature branch or from a
 devcontainer startup hook.
 
-## Use Only When
+## Required sub-skills
 
-- The repository is active and Python-based or a Techletes full-stack project.
-- No explicit client or product requirement mandates another baseline.
-- A separate setup PR and template-sync PR are acceptable.
+Use `techletes-superpowers:verification-before-completion` before claiming
+adoption is complete. Use `techletes-superpowers:systematic-debugging` for
+merge, workflow, install, hook, or test failures rather than bypassing them.
 
-Stop and report instead of changing files for archived repositories, temporary
-scripts, non-Python/non-full-stack repositories, or unclear ownership of
-production configuration.
-
-## Choose the Immediate Upstream
+## Choose the immediate upstream
 
 Classify the target before changing files:
 
@@ -59,59 +55,96 @@ If the target type or intended parent is unclear, inspect the repository origin,
 frontend, compose/deployment files, and branch model, then ask the user before
 continuing.
 
-**REQUIRED SUB-SKILL:** Use
-`techletes-superpowers:verification-before-completion` before claiming adoption
-is complete. Use `techletes-superpowers:systematic-debugging` for merge,
-workflow, install, hook, or test failures rather than bypassing them.
-
 ## Preflight
 
-1. Read the target repository's `AGENTS.md`, `README.md`, `pyproject.toml`, CI
-   workflows, devcontainer files, and branch rules. For full-stack targets, also
-   inspect frontend manifests and compose/deployment files.
-2. Identify the integration branch. Prefer `staging`; use `main` only when the
-   repository intentionally develops directly on `main`.
+1. Read `AGENTS.md`, `README.md`, `pyproject.toml`, CI workflows, devcontainer
+   files, branch rules, and—for full-stack targets—frontend and deployment files.
+2. Determine both:
+   - the integration branch, normally `staging`;
+   - the repository default branch, commonly `main`.
 3. Require a clean working tree. Do not stash, reset, or discard user work.
 4. Check whether `.template-sync.yml`, `chore/template-sync`, or either caller
-   workflow already exists. Preserve and update a valid setup rather than
+   workflow already exists. Preserve and repair a valid setup rather than
    recreating it.
-5. Inspect `.devcontainer/post-attach.sh`, `post-create.sh`, and related startup
-   scripts for template-fetch or template-merge logic. Remove such logic during
-   adoption; opening a devcontainer must not modify Git history.
-6. Record the starting branch and commit so work can be abandoned without
-   destructive commands.
+5. Inspect devcontainer startup scripts for template-fetch or template-merge
+   logic. Remove such logic; opening a devcontainer must not modify Git history.
+6. Record the starting branch and commit.
 
-## Conflict Ownership
+## Canonical managed-path rule
 
-Use these rules when choosing the managed-path allowlist and reviewing the first
-sync PR:
+Do not invent a shortened allowlist from memory or from the example in this
+skill.
+
+The immediate upstream template's own downstream `.template-sync.yml` is the
+canonical baseline for managed paths:
+
+- A full-stack project following `TECHLETES/full-stack-template` must read
+  `TECHLETES/full-stack-template/main:.template-sync.yml` and start with its
+  complete `paths` list.
+- A Python-only project following `TECHLETES/python_template` must use the
+  current downstream baseline designated by `python_template`; inspect the
+  repository rather than guessing.
+- `TECHLETES/full-stack-template` following `python_template` uses its dedicated
+  `.python-template-sync.yml`, not its downstream `.template-sync.yml`.
+
+Copy the canonical `paths` list completely first. Then make only deliberate,
+documented target-specific exclusions where the target truly owns a path.
+Never silently omit entries because the file does not yet exist in the target;
+a principal purpose of synchronization is to receive newly added governed
+files later.
+
+The target repository's `.template-sync.yml` is always target-owned and must
+never appear in its own `paths` list.
+
+For example, the full-stack downstream baseline currently governs shared GitHub
+workflows, devcontainer files, Python and frontend baseline files, runtime and
+deployment baseline files, shared scripts, `AGENTS.md`, and explicitly governed
+documentation. Fetch the live upstream file before implementation; do not rely
+on this prose as the file list.
+
+## Conflict ownership
+
+Use these rules only when deciding documented exclusions or reconciling a sync
+PR. They do not replace the canonical upstream allowlist.
 
 | Area | Decision |
 |---|---|
-| Application code, migrations, domain docs | Target-owned |
-| Full-stack backend/frontend, generated client, compose, Caddy, deployment | Target-owned unless explicitly governed by the immediate upstream |
+| Application code, migrations, domain-specific docs | Target-owned |
 | Existing dependencies and package identity | Target-owned; merge tooling carefully |
-| `.devcontainer/`, pre-commit, VS Code settings, generic engineering workflows | Usually template-managed, then adapt project-specific paths, services, and ports |
-| `pyproject.toml` | Mixed ownership; include only when continuous central governance is intended |
+| Centrally governed devcontainer, quality and engineering files | Template-managed, then adapt project-specific values |
+| `pyproject.toml` | Mixed content, but keep managed when the upstream baseline governs it; reconcile rather than silently exclude |
 | `uv.lock` | Never hand-merge; regenerate after `pyproject.toml` is final |
-| Frontend package and lock files | Usually target-owned |
-| Release/deployment workflows | Preserve unless explicitly centrally governed |
-| `.env.template` and client configuration | Preserve variables and semantics |
-| `README.md` and `AGENTS.md` | Preserve project context unless explicitly centrally governed |
-| `.secret.baseline` | Regenerate with the configured tooling; investigate new findings |
+| Product-specific release/deployment behavior | Preserve unless the upstream baseline explicitly governs the file |
+| `.secret.baseline` | Regenerate with the configured tooling; investigate findings |
 
-Start conservatively. Do not use `**` as a repository-wide allowlist and do not
-include mixed-ownership files merely because they exist in the template.
-
-## Initial Setup
+## Initial setup
 
 The first adoption uses the same permanent synchronization mechanism as later
 updates. Do not manually merge the complete upstream template on a temporary
 feature branch.
 
-### 1. Create the target-owned sync configuration
+### 1. Create `.template-sync.yml`
 
-Create `.template-sync.yml` in the target repository:
+Fetch the immediate upstream's canonical downstream configuration. Copy its
+complete `paths` list, then set only the target-specific source and branches.
+
+Typical full-stack project header:
+
+```yaml
+source:
+  repository: TECHLETES/full-stack-template
+  branch: main
+
+target:
+  branch: staging
+  sync_branch: chore/template-sync
+
+paths:
+  # Copy the complete current paths list from
+  # TECHLETES/full-stack-template/main:.template-sync.yml.
+```
+
+Typical Python-only project header:
 
 ```yaml
 source:
@@ -123,41 +156,24 @@ target:
   sync_branch: chore/template-sync
 
 paths:
-  # Shared GitHub configuration.
-  - .github/workflows/staging-main-check.yml
-  - .github/workflows/labeler.yml
-  - .github/ISSUE_TEMPLATE/**
-  - .github/dependabot.yml
-  - .github/pull_request_template.md
-
-  # Shared development environment.
-  - .devcontainer/**
-
-  # Shared Python tooling.
-  - .pre-commit-config.yaml
-  - .python-version
-  - .editorconfig
-  - .gitattributes
-  - pyproject.toml
-
-  # Shared helper scripts.
-  - scripts/hooks/**
+  # Copy the complete current Python downstream baseline.
 ```
 
-Change the source to `TECHLETES/full-stack-template` for a normal full-stack
-project. Change `target.branch` when the repository uses another integration
-branch.
+Validation before committing:
 
-The configuration is target-owned and must not list itself under `paths`.
-Prefer explicit workflow paths over `.github/workflows/**` when not every
-workflow is centrally governed.
+- `source.repository` is the immediate upstream;
+- `target.branch` is the actual integration branch;
+- `target.sync_branch` is `chore/template-sync`;
+- every canonical upstream path is present unless an exclusion is explicitly
+  documented;
+- `.template-sync.yml` itself is absent from `paths`.
 
 ### 2. Add the template-sync caller
 
 Create `.github/workflows/template-sync.yml`:
 
 ```yaml
-name: Sync Python template
+name: Sync template
 
 on:
   workflow_dispatch:
@@ -169,30 +185,25 @@ jobs:
     uses: TECHLETES/python_template/.github/workflows/reusable-template-sync.yml@main
 
     with:
-      template_repository: TECHLETES/python_template
+      template_repository: TECHLETES/full-stack-template
       template_branch: main
       target_branch: staging
       sync_branch: chore/template-sync
       config_path: .template-sync.yml
-      pull_request_title: "chore: sync Python template"
+      pull_request_title: "chore: sync full-stack template"
 
     secrets:
       app_client_id: ${{ vars.TEMPLATE_SYNC_APP_CLIENT_ID }}
       app_private_key: ${{ secrets.TEMPLATE_SYNC_APP_PRIVATE_KEY }}
 ```
 
-For a full-stack project, call the reusable workflow from
-`TECHLETES/full-stack-template` and set `template_repository` accordingly when
-that repository provides the reusable implementation. Otherwise use the
-centrally designated reusable workflow while keeping the configured immediate
-upstream accurate.
+For Python-only targets, change `template_repository` and the title to
+`TECHLETES/python_template`. The reusable implementation remains centralized in
+`python_template` unless Techletes explicitly changes that architecture.
 
-The caller inputs must exactly match `.template-sync.yml`.
+Caller inputs must exactly match `.template-sync.yml`.
 
 ### 3. Add the reconciliation caller
-
-Each target repository needs its own event listener because the merged pull
-request event occurs in that repository.
 
 Create `.github/workflows/reconcile-template-sync-branch.yml`:
 
@@ -217,6 +228,7 @@ jobs:
   reconcile:
     if: >
       github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref == 'chore/template-sync'
 
     uses: TECHLETES/python_template/.github/workflows/reusable-reconcile-template-sync-branch.yml@main
@@ -230,14 +242,12 @@ jobs:
       app_private_key: ${{ secrets.TEMPLATE_SYNC_APP_PRIVATE_KEY }}
 ```
 
-Adapt `staging` to the actual integration branch. This file is a small local
-caller; the reconciliation implementation stays centralized.
+Adapt `staging` to the actual integration branch. The event listener must remain
+local because the pull-request event occurs in the target repository.
 
-### 4. Merge the bootstrap files into the integration branch
+### 4. Bootstrap through the default branch
 
-Create a normal setup branch from the current integration branch, add the three
-bootstrap files, remove legacy startup merging, run relevant checks, and open a
-regular setup PR:
+Create a normal setup PR containing:
 
 ```text
 .template-sync.yml
@@ -245,13 +255,29 @@ regular setup PR:
 .github/workflows/reconcile-template-sync-branch.yml
 ```
 
-Do not create the permanent sync branch before these files are merged into the
-integration branch.
+Merge it into the integration branch first.
 
-### 5. Create the initial permanent sync branch
+If the default branch differs from the integration branch—for example,
+`main` is default and `staging` is integration—promote the setup through the
+repository's normal `staging -> main` release PR before attempting the first
+workflow run.
 
-After the setup PR is merged, create `chore/template-sync` directly from the
-current integration branch:
+The workflow files must exist on the default branch because:
+
+- `workflow_dispatch` is discovered there;
+- scheduled workflows run from there;
+- the local pull-request reconciliation listener must be installed there.
+
+The configuration may still target `staging`; workflow location and target
+branch are separate concerns.
+
+Do not create the permanent sync branch until the bootstrap files are merged
+into the integration branch and the workflow callers are present on the default
+branch.
+
+### 5. Create the permanent sync branch
+
+Create `chore/template-sync` directly from the current integration branch:
 
 ```bash
 git fetch origin
@@ -264,53 +290,41 @@ git push -u origin chore/template-sync
 The initial relationship must be:
 
 ```text
-chore/template-sync == staging
+chore/template-sync == integration branch
 ```
 
-Do not seed the branch with copied template files, an orphan commit, or a manual
+Do not seed it with copied template files, an orphan commit, or a manual
 upstream merge.
 
 This branch is permanent. Never delete, recreate, rebase, reset, or force-push
-it. Its retained merge ancestry records which upstream commits were processed.
-
-Configure a branch ruleset matching exactly `chore/template-sync`:
-
-- enable **Restrict deletions**;
-- enable **Block force pushes**;
-- do not require linear history;
-- do not require pull requests for direct automation updates;
-- keep validation checks on the PR into the integration branch;
-- retain a restricted maintainer/admin bypass for recovery.
+it. Configure a ruleset that blocks deletion and force pushes, permits merge
+commits and direct automation updates, and retains a restricted recovery bypass.
 
 ### 6. Run the first sync
 
-Trigger the template-sync caller manually from GitHub Actions.
+Trigger the template-sync caller manually.
 
 The reusable workflow must:
 
 1. Check out `chore/template-sync` with full history.
 2. Fetch the integration branch and configured immediate upstream.
-3. Merge the latest integration branch into the permanent sync branch.
-4. Merge the upstream branch with `--allow-unrelated-histories` and create a
+3. Merge the integration branch into the permanent sync branch.
+4. Merge the upstream branch with `--allow-unrelated-histories`, retaining a
    genuine two-parent merge commit.
-5. Restore every path outside `.template-sync.yml` to its pre-template state.
+5. Restore every path outside the allowlist to its pre-template state.
 6. Resolve unmanaged conflicts in favor of the target.
-7. Resolve managed conflicts temporarily to the **template version**, so the
-   actual proposed upstream content appears in the PR diff.
+7. Apply the template version for managed conflicts so the actual proposed
+   upstream content appears in the PR diff.
 8. Push the permanent sync branch.
-9. Open or update one PR from `chore/template-sync` to the integration branch.
-10. Open the PR as draft when managed conflicts require review.
+9. Open or update one PR to the integration branch.
+10. Open that PR as draft when managed conflicts require review.
 
-The workflow must never push directly to `staging` or `main`.
+The workflow must never push directly to the integration or default branch.
 
-### 7. Review the first sync PR
+### 7. Review and squash-merge the sync PR
 
-For ordinary managed changes, review the PR normally.
-
-When the PR says manual template reconciliation is required, the listed files
-already contain the template versions and must appear under **Files changed**.
-Review those visible changes and restore only the required target-specific
-behavior directly on the permanent branch:
+For managed conflicts, review the listed files under **Files changed** and
+restore only required target-specific behavior directly on the permanent branch:
 
 ```bash
 git fetch origin
@@ -324,85 +338,49 @@ git commit -m "chore: reconcile template conflicts"
 git push origin chore/template-sync
 ```
 
-Do not manually compare hidden versions with `git show` unless additional
-forensics are needed. The normal review path is the PR diff itself.
+Then:
 
-After reconciliation:
-
-1. Verify the listed files preserve required target-specific behavior.
+1. Validate the repository.
 2. Remove the manual-reconciliation section and hidden marker from the PR body.
-3. Mark the PR ready for review.
-4. Run the repository's documented validation.
-5. Squash-merge the PR without deleting `chore/template-sync`.
+3. Mark the PR ready.
+4. Squash-merge it.
+5. Do not delete `chore/template-sync`.
 
 ### 8. Verify post-merge reconciliation
 
-After the template PR is squash-merged, the reconciliation caller must merge the
-updated integration branch back into `chore/template-sync`.
+After the squash merge, the local reconciliation caller must merge the updated
+integration branch back into `chore/template-sync`.
 
-The expected final relationship is:
+Expected final relationship:
 
 ```text
 integration branch is an ancestor of chore/template-sync
 upstream template/main is an ancestor of chore/template-sync
 ```
 
-If reconciliation conflicts, do not rebase or recreate the permanent branch.
-Resolve once on `chore/template-sync`:
+If reconciliation conflicts, resolve the merge once on the permanent branch.
+Do not rebase, reset, recreate, or force-push it.
 
-```bash
-git fetch origin
-git switch chore/template-sync
-git pull --ff-only origin chore/template-sync
-git merge --no-ff origin/staging
-# Resolve conflicts.
-git add -A
-git commit
-git push origin chore/template-sync
-```
+## Later template updates
 
-Adapt `staging` to the configured integration branch.
-
-## Later Template Updates
-
-All future updates use the permanent branch and the two caller workflows.
-
-Expected automated sequence:
+All future updates use the permanent branch and the two caller workflows:
 
 ```text
 checkout chore/template-sync
 merge current integration branch
 merge new upstream template commit
-filter to configured paths
+filter to canonical configured paths
 apply template versions for managed conflicts
 push chore/template-sync
 open or update draft/normal PR
-squash-merge PR without deleting branch
+squash-merge without deleting branch
 merge integration branch back into chore/template-sync
 ```
 
-Never create one-off `chore/update-template` branches and never merge template
-updates from `post-attach.sh` or `post-create.sh`.
+Never create one-off update branches and never merge templates from devcontainer
+startup scripts.
 
-## Remove Legacy Startup Merging
-
-Remove template-fetch and template-merge logic from devcontainer startup
-scripts. A valid `post-attach.sh` may start or restart services only, for example:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-cd "${repo_root}"
-
-bash .devcontainer/dev-services.sh restart
-```
-
-Opening a devcontainer must never fetch templates, merge branches, stage files,
-commit, or push.
-
-## Finish and Verify
+## Verification
 
 Run the repository's documented checks. Typical Python checks are:
 
@@ -415,48 +393,25 @@ uv run pre-commit run --all-files
 uv run pytest
 ```
 
-For full-stack targets, also run the smallest documented frontend lint, type
-checking, and test commands. Regenerate the frontend client only when API
-changes require it. Follow the target's `AGENTS.md` for Docker restrictions.
+For full-stack targets, also run documented frontend lint, type checking, and
+tests.
 
-Verify the synchronization setup:
+Before completion, verify:
 
-- `.template-sync.yml` points to the correct immediate upstream and integration
-  branch;
-- its allowlist includes only deliberately governed paths and excludes the
-  configuration itself;
-- both local caller workflows exist on the integration branch;
+- the correct immediate upstream was selected;
+- the target `paths` list was derived from the immediate upstream's current
+  canonical downstream `.template-sync.yml`, not handcrafted;
+- any deviations from that canonical list are explicitly documented;
+- `.template-sync.yml` does not list itself;
+- both caller workflows exist on the integration branch and default branch;
 - `chore/template-sync` was created from the current integration branch;
-- the permanent branch contains the upstream merge ancestry after the first
-  sync;
-- the ruleset blocks deletion and force pushes while permitting merge commits;
-- the template-sync workflow has a schedule and manual trigger;
-- the sync PR uses the permanent branch as head and the integration branch as
-  base;
-- template-conflicted managed files are visible in the draft PR diff;
-- the PR is squash-merged without deleting the permanent branch;
-- post-merge reconciliation brings the integration branch back into the
-  permanent branch;
+- the first sync retained upstream ancestry;
+- managed conflicts are visible in the draft PR diff;
+- the PR was squash-merged without deleting the permanent branch;
+- post-merge reconciliation succeeded;
 - legacy devcontainer merge logic is gone;
-- existing deployment workflows remain present;
-- no real secrets entered the repository or secret baseline.
+- existing product-specific behavior and deployment workflows remain intact.
 
-## Completion Evidence
-
-The setup or adoption PR must state:
-
-- selected immediate upstream;
-- target integration branch;
-- `.template-sync.yml` managed paths and intentional exclusions;
-- caller workflow locations and schedule;
-- permanent sync branch creation status;
-- branch ruleset status;
-- first sync PR status and any reconciled managed conflicts;
-- post-merge reconciliation result;
-- validation results, including frontend checks when applicable;
-- devcontainer result or documented reason it was not run;
-- secret-baseline result and any legacy gaps.
-
-Do not claim completion when the configuration, callers, permanent branch,
-first sync PR, required reconciliation, or removal of startup merging is still
+Do not claim completion when the canonical path comparison, workflow bootstrap,
+permanent branch, first sync PR, required reconciliation, or validation is still
 missing.
