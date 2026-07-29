@@ -133,6 +133,26 @@ with:
 Use `TECHLETES/full-stack-template` as `template_repository` for a normal
 full-stack project. Do not duplicate the reusable sync engine locally.
 
+## Organization-provided credentials
+
+The following Actions values are provided centrally at the TECHLETES
+organization level and are available to participating repositories:
+
+```text
+TEMPLATE_SYNC_APP_CLIENT_ID
+TEMPLATE_SYNC_APP_PRIVATE_KEY
+```
+
+Assume these values are available. Do not block Phase 2 or Phase 3, ask the user
+to configure repository-level values, or report them as missing merely because
+repository-level variable or secret listings are empty. Organization-level
+secrets are intentionally not readable through normal repository inspection.
+
+Proceed with creating the permanent branch and triggering the first sync. Only
+treat credentials as unavailable when an actual workflow run fails with an
+explicit credential, secret-access, or GitHub App token error. Diagnose that
+concrete run failure instead of pre-emptively stopping.
+
 ## Add or repair reconciliation
 
 First verify whether the exact reusable reconciliation workflow referenced by a
@@ -175,8 +195,8 @@ Never leave `<integration-branch>` as a placeholder, never default this trigger
 to the repository default branch, and never use `main` when `staging` exists.
 The reconciliation trigger branch must exactly equal both:
 
-- `.template-sync.yml` → `target.branch`;
-- `.github/workflows/template-sync.yml` → `with.target_branch`.
+- `.template-sync.yml` -> `target.branch`;
+- `.github/workflows/template-sync.yml` -> `with.target_branch`.
 
 A push trigger covers normal PR merges, the squash merge of the template-sync
 PR, and permitted direct pushes. The reconciliation workflow must:
@@ -266,6 +286,11 @@ Immediately before the first run, fetch and inspect again:
 
 Verify exact configuration equality except for the permitted target-branch
 change.
+
+Do not perform a repository-level preflight check for
+`TEMPLATE_SYNC_APP_CLIENT_ID` or `TEMPLATE_SYNC_APP_PRIVATE_KEY`. They are
+organization-provided. Trigger the workflow and use the run result as the source
+of truth for credential availability.
 
 Trigger the template-sync caller manually. The sync engine must:
 
@@ -360,6 +385,8 @@ Before completion, verify:
 - the complete `paths` list is byte-for-byte equivalent in entries and order;
 - no downstream exclusions exist;
 - every reusable workflow reference exists;
+- organization-provided template-sync credentials were assumed available unless
+  an actual workflow run reported a concrete credential-access failure;
 - setup workflows exist on the default branch;
 - the permanent branch started from the current integration branch;
 - deletion and force pushes are blocked;
