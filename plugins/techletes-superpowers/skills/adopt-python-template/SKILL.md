@@ -170,6 +170,22 @@ Remove any template fetch, merge, staging, commit, or push behavior from
 `post-create.sh`, `post-attach.sh`, or other devcontainer startup hooks. Opening a
 devcontainer must never modify Git history.
 
+## Open and label the setup PR
+
+Open the Phase 1 setup PR through the repository's normal contribution flow.
+Add the existing `chore` label to this initial setup PR. If the repository does
+not yet have a `chore` label, create it before labeling the PR rather than
+silently omitting the label.
+
+Example:
+
+```bash
+gh label create chore --description "Maintenance and repository tooling" --color BFD4F2 2>/dev/null || true
+gh pr edit <setup-pr-number> --add-label chore
+```
+
+Do not apply a different substitute label when `chore` is absent.
+
 ## Bootstrap through the default branch
 
 The setup PR contains the configuration and local workflow files.
@@ -236,6 +252,18 @@ Trigger the template-sync caller manually. The sync engine must:
 6. Push the permanent branch.
 7. Open or update one PR to the integration branch.
 8. Use a draft PR when manual reconciliation is required.
+9. Add the `chore` label to every template-sync PR, including the first sync PR
+   and every later updated or newly opened sync PR.
+
+If the reusable sync workflow does not apply labels itself, label the PR after it
+is opened or updated:
+
+```bash
+gh label create chore --description "Maintenance and repository tooling" --color BFD4F2 2>/dev/null || true
+gh pr edit <sync-pr-number> --add-label chore
+```
+
+Do not consider PR creation complete until the `chore` label is present.
 
 The workflow must never push directly to the integration or default branch.
 
@@ -304,6 +332,8 @@ Before completion, verify:
 - setup workflows exist on the default branch;
 - the permanent branch started from the current integration branch;
 - deletion and force pushes are blocked;
+- the initial setup PR has the `chore` label;
+- the first and every later template-sync PR has the `chore` label;
 - the first sync retained upstream ancestry;
 - target-specific behavior was reconciled inside managed files;
 - the sync PR was squash-merged without deleting the permanent branch;
