@@ -47,10 +47,15 @@ restart by deleting or rewriting the permanent branch.
 Before changing files, determine:
 
 - the immediate upstream template;
-- the integration branch, usually `staging` or `main`;
-- the default branch, commonly `main`;
+- whether a `staging` branch exists;
+- the integration branch, which is **always `staging` when that branch exists,
+  otherwise `main`**;
+- the repository default branch, commonly `main`;
 - whether the repository already contains sync configuration, workflows, a
   permanent branch, or an open sync PR.
+
+Do not infer the integration branch from the default branch. A repository may
+have `main` as default while still using `staging` as its integration branch.
 
 | Target | Immediate upstream | Config source |
 |---|---|---|
@@ -73,7 +78,7 @@ For a normal downstream repository:
 
 1. Copy the upstream `.template-sync.yml` file **verbatim**.
 2. Change **only** `target.branch` to the current repository's actual integration
-   branch.
+   branch: `staging` when it exists, otherwise `main`.
 3. Do not add, remove, reorder, rename, or rewrite any `paths` entry.
 4. Do not change `source.repository`, `source.branch`, or
    `target.sync_branch` unless this skill's repository hierarchy explicitly
@@ -84,7 +89,7 @@ For `TECHLETES/full-stack-template` following `python_template`, copy its
 canonical `.python-template-sync.yml` in the same way and change only the target
 branch when required.
 
-The required downstream invariant is:
+Required invariant:
 
 ```text
 target paths == upstream canonical paths
@@ -94,17 +99,12 @@ There are **no downstream path exclusions**. Project-specific behavior in a
 managed file is preserved by reconciling that file's contents in the sync PR,
 not by removing the file from `paths`.
 
-Examples:
+Keep managed:
 
-- Keep `.github/workflows/template-sync.yml` managed even when the downstream
-  repository targets `main` and the upstream example targets `staging`.
-- Keep `.devcontainer/**` managed even when downstream hooks contain additional
-  environment setup.
-- Keep mixed-content files such as `pyproject.toml` managed when they appear in
-  the canonical list.
-
-For those files, preserve required target-specific values while reviewing the
-sync PR. Do not solve content differences by changing the allowlist.
+- `.github/workflows/template-sync.yml`, even when the downstream repository
+  targets `main` and the upstream example targets `staging`;
+- `.devcontainer/**`, even when downstream hooks contain extra setup;
+- mixed-content files such as `pyproject.toml` when present in the canonical list.
 
 The configuration file must never list itself. If the canonical upstream config
 contains its own config path, a nonexistent managed file, or another structural
@@ -119,7 +119,7 @@ Use the central sync engine:
 uses: TECHLETES/python_template/.github/workflows/reusable-template-sync.yml@main
 ```
 
-The caller inputs must exactly match the target configuration:
+Caller inputs must exactly match the target configuration:
 
 ```yaml
 with:
@@ -140,21 +140,49 @@ caller exists on the referenced branch. Never create a `uses:` reference to a
 nonexistent workflow.
 
 When no reusable reconciliation workflow exists, add a complete local workflow.
-The reconciliation workflow should trigger on every push to the integration
-branch:
+
+The reconciliation workflow must **always** trigger on every push to the actual
+integration branch. Resolve that branch first using this exact rule:
+
+```text
+integration branch = staging if the repository has a staging branch, else main
+```
+
+Then write the trigger with the resolved literal branch name. For example, when
+`staging` exists:
 
 ```yaml
+name: Reconcile template sync branch
+
 on:
   push:
     branches:
-      - <integration-branch>
+      - staging
 ```
 
-This covers normal PR merges, the squash merge of the template-sync PR, and any
-permitted direct push. It must:
+For a repository without `staging`:
+
+```yaml
+name: Reconcile template sync branch
+
+on:
+  push:
+    branches:
+      - main
+```
+
+Never leave `<integration-branch>` as a placeholder, never default this trigger
+to the repository default branch, and never use `main` when `staging` exists.
+The reconciliation trigger branch must exactly equal both:
+
+- `.template-sync.yml` → `target.branch`;
+- `.github/workflows/template-sync.yml` → `with.target_branch`.
+
+A push trigger covers normal PR merges, the squash merge of the template-sync
+PR, and permitted direct pushes. The reconciliation workflow must:
 
 1. Check out the permanent sync branch with full history.
-2. Fetch the remote permanent branch and integration branch.
+2. Fetch the remote permanent branch and resolved integration branch.
 3. Ensure the local checkout matches the remote permanent branch.
 4. Exit successfully when the integration branch is already an ancestor.
 5. Merge the integration branch with `--no-ff`.
@@ -174,28 +202,26 @@ devcontainer must never modify Git history.
 
 Open the Phase 1 setup PR through the repository's normal contribution flow.
 Add the existing `chore` label to this initial setup PR. If the repository does
-not yet have a `chore` label, create it before labeling the PR rather than
-silently omitting the label.
-
-Example:
+not yet have a `chore` label, create it before labeling the PR.
 
 ```bash
 gh label create chore --description "Maintenance and repository tooling" --color BFD4F2 2>/dev/null || true
 gh pr edit <setup-pr-number> --add-label chore
 ```
 
-Do not apply a different substitute label when `chore` is absent.
+Do not apply a substitute label when `chore` is absent.
 
 ## Bootstrap through the default branch
 
 The setup PR contains the configuration and local workflow files.
 
-When the default branch differs from the integration branch—for example,
-`main` is default and `staging` is integration—promote the setup through the
-normal `staging -> main` flow before attempting the first workflow run.
+When the default branch differs from the integration branch—for example, `main`
+is default and `staging` is integration—promote the setup through the normal
+`staging -> main` flow before attempting the first workflow run.
 
-Manual and scheduled workflows must exist on the default branch. The workflow
-configuration may still target the integration branch.
+Manual and scheduled workflows must exist on the default branch. Their target
+and the reconciliation push trigger must still use the resolved integration
+branch.
 
 # Phase 2: Permanent branch creation
 
@@ -252,11 +278,10 @@ Trigger the template-sync caller manually. The sync engine must:
 6. Push the permanent branch.
 7. Open or update one PR to the integration branch.
 8. Use a draft PR when manual reconciliation is required.
-9. Add the `chore` label to every template-sync PR, including the first sync PR
-   and every later updated or newly opened sync PR.
+9. Add the `chore` label to every template-sync PR, including the first and all
+   later updated or newly opened sync PRs.
 
-If the reusable sync workflow does not apply labels itself, label the PR after it
-is opened or updated:
+When the reusable sync workflow does not apply labels itself:
 
 ```bash
 gh label create chore --description "Maintenance and repository tooling" --color BFD4F2 2>/dev/null || true
@@ -264,7 +289,6 @@ gh pr edit <sync-pr-number> --add-label chore
 ```
 
 Do not consider PR creation complete until the `chore` label is present.
-
 The workflow must never push directly to the integration or default branch.
 
 ## Review managed files
@@ -288,11 +312,14 @@ Never delete the permanent branch.
 
 # Phase 4: Post-merge reconciliation
 
-The integration-branch push caused by the squash merge must trigger the
-reconciliation workflow. It merges the updated integration branch back into the
-permanent sync branch.
+Every push to the resolved integration branch must trigger reconciliation. This
+includes the push caused by squash-merging the template-sync PR and pushes caused
+by all other merged PRs or permitted direct changes.
 
-Expected final invariants:
+The workflow merges the updated integration branch back into the permanent sync
+branch.
+
+Expected invariants:
 
 ```text
 integration branch is an ancestor of chore/template-sync
@@ -314,21 +341,25 @@ does not replay historical content.
 Repair this by performing a one-time reconciliation on the permanent branch:
 fetch the live upstream versions of all previously omitted canonical files,
 merge or copy them into the permanent branch, preserve target-specific content,
-commit normally, and open/update the sync PR. Do not rewrite ancestry.
+commit normally, and open or update the sync PR. Do not rewrite ancestry.
 
 # Verification
 
 Before completion, verify:
 
 - the correct immediate upstream was selected;
+- the integration branch was resolved as `staging` when it exists, otherwise
+  `main`;
+- `.template-sync.yml`, the template-sync caller, and the reconciliation workflow
+  all use that same integration branch;
+- the reconciliation workflow uses `on.push.branches` with the resolved literal
+  integration branch;
 - the target configuration was copied from the live direct upstream;
 - only `target.branch` differs from that canonical configuration, except for the
   special `full-stack-template`/`.python-template-sync.yml` relationship;
 - the complete `paths` list is byte-for-byte equivalent in entries and order;
 - no downstream exclusions exist;
-- the caller inputs match the configuration;
 - every reusable workflow reference exists;
-- local reconciliation triggers on every integration-branch push;
 - setup workflows exist on the default branch;
 - the permanent branch started from the current integration branch;
 - deletion and force pushes are blocked;
