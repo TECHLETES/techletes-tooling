@@ -48,12 +48,13 @@ None. This is the first implementation plan.
 
 ```bash
 git fetch origin
-git worktree add ../techletes-tooling-cockpit-bootstrap \
-  -b feature/engineering-cockpit-bootstrap origin/main
-cd ../techletes-tooling-cockpit-bootstrap
+mkdir -p ~/worktrees/techletes-tooling
+git worktree add ~/worktrees/techletes-tooling/cockpit-01-bootstrap \
+  -b feature/cockpit-01-bootstrap origin/main
+cd ~/worktrees/techletes-tooling/cockpit-01-bootstrap
 ```
 
-Expected: `git branch --show-current` prints `feature/engineering-cockpit-bootstrap`.
+Expected: `git branch --show-current` prints `feature/cockpit-01-bootstrap`.
 
 - [ ] **Step 2: Fetch the template into a temporary remote**
 

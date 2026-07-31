@@ -2,8 +2,8 @@
 schema_version: 1
 project: techletes-engineering-cockpit
 planning_issue: TECHLETES/techletes-tooling#7
-updated_at: 2026-07-31T16:16:00+02:00
-updated_by: planning
+updated_at: 2026-07-31T16:35:00+02:00
+updated_by: controller
 current_phase: "Phase 0 - bootstrap"
 current_subsystem: "01"
 current_plan: "superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md"
@@ -11,7 +11,7 @@ current_status: ready_to_start
 working_branch: null
 working_worktree: null
 last_verified_commit: null
-next_action: "Create the subsystem 01 branch/worktree, start a Sol or Terra controller session, and explicitly authorize Subagent-Driven Development for the active child plan."
+next_action: "Create feature/cockpit-01-bootstrap in ~/worktrees/techletes-tooling/cockpit-01-bootstrap, then execute the active child plan with confirmed Subagent-Driven Development."
 blockers: []
 ---
 
@@ -32,7 +32,7 @@ Git history, the current child implementation plan, `.superpowers/sdd/progress.m
 | Worktree | Not created yet |
 | Last verified commit | Planning package on `main` |
 | Last verification | Planning documents, portable handoff files, and Sol/Terra controller/Luna Medium subagent workflow created |
-| Immediate next action | Create the subsystem 01 worktree, start Sol or Terra, and use the kickoff prompt in `CODEX_RUNBOOK.md` |
+| Immediate next action | Create `feature/cockpit-01-bootstrap` in `~/worktrees/techletes-tooling/cockpit-01-bootstrap`, start Sol or Terra, and use the kickoff prompt in `CODEX_RUNBOOK.md` |
 | Blockers | None known |
 
 ## Subsystem progress
@@ -70,7 +70,7 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 ### Current unchecked task
 
-Start at the first unchecked task in the subsystem 01 implementation plan. Do not infer completion from the planning commits.
+Start at the first unchecked task in the subsystem 01 implementation plan. The canonical subsystem branch is `feature/cockpit-01-bootstrap`; do not infer completion from the planning commits.
 
 The Sol/Terra controller must initialize the task rows in `.superpowers/sdd/progress.md`, then dispatch fresh Luna Medium implementers and reviewers according to `DEVELOPMENT_ORCHESTRATION.md`.
 

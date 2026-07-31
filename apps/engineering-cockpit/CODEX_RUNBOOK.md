@@ -70,6 +70,11 @@ feature/cockpit-05a-worktree-git-mount
 feature/cockpit-15-release-proof
 ```
 
+These are the canonical subsystem branch names. Child implementation plans,
+`PROJECT_STATE.md`, and session handoffs must use the matching
+`feature/cockpit-<id>-<slug>` name; do not introduce alternate names for the
+same subsystem.
+
 ## One-time local setup
 
 From WSL:

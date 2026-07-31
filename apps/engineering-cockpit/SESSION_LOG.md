@@ -62,3 +62,18 @@ Rules:
 - **Blockers:** None
 - **Working tree:** Not applicable; application implementation has not started
 - **Next action:** Create `feature/cockpit-01-bootstrap`, start a Sol or Terra controller session, and paste the kickoff prompt from `CODEX_RUNBOOK.md`.
+
+## 2026-07-31 16:35 Europe/Amsterdam — Reconcile subsystem branch conventions
+
+- **Subsystem:** 01 — Template bootstrap and WSL runtime topology
+- **Branch:** `main`
+- **Start HEAD:** `381750ec68582c5936e3c191003cf34b9c127e9b`
+- **End HEAD:** Controller handoff commit
+- **Plan step:** Pre-flight branch/worktree convention reconciliation before Task 1
+- **Completed:** Made `feature/cockpit-01-bootstrap` and `~/worktrees/techletes-tooling/cockpit-01-bootstrap` the consistent subsystem 01 startup convention across the runbook, active plan, and project state.
+- **Files changed:** `CODEX_RUNBOOK.md`, `PROJECT_STATE.md`, `superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md`
+- **Verification:** `rg -n -i 'feature/(engineering-cockpit|cockpit)-|cockpit-01-bootstrap'` — PASS; no alternate subsystem 01 branch name remains
+- **Decisions/findings:** The runbook's `feature/cockpit-<id>-<slug>` pattern is canonical for subsystem branches.
+- **Blockers:** None
+- **Working tree:** clean after the controller handoff commit
+- **Next action:** Create the subsystem 01 worktree from the corrected planning baseline.
