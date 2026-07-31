@@ -73,7 +73,7 @@ Record reviewer findings intentionally deferred to the final whole-branch review
 | Fix report | — |
 | Re-review result | — |
 
-## Current controller checkpoint — 2026-07-31
+## Historical controller checkpoint — 2026-07-31 17:18 Europe/Amsterdam
 
 ### Objective and current requirements
 
@@ -115,10 +115,25 @@ do not start them on this branch.
   commit the staged fixes in the two quality worktrees; cherry-pick their
   commits onto this branch; then run Task 6 commands from
   `apps/engineering-cockpit` and update `docs/bootstrap-verification.md`.
-- Reconfirmed 2026-07-31: `SSH_AUTH_SOCK` remains unset and `ssh-add -L`
-  cannot connect to an authentication agent. This is an external signing
-  blocker, not a repository defect. No signing bypass, push, merge, or
-  cleanup was attempted.
+
+## Current controller checkpoint — 2026-07-31 18:25 Europe/Amsterdam
+
+- **Objective:** complete subsystem 01 only; do not start later subsystems.
+- **Completed:** Tasks 1–5 are reviewed; all final code-review findings are
+  fixed through `1c4321c`; host services, launcher, preflight, backend,
+  frontend, and repository pre-commit baseline pass.
+- **Current work:** Task 6 is blocked only at the exact devcontainer
+  `pre-commit run --all-files` gate.
+- **Files changed:** committed implementation through `1c4321c`; handoff and
+  verification evidence through `0edaf13`.
+- **Decision:** do not add the linked-worktree Git common-directory mount in
+  subsystem 01 because its architecture and test contract belong to 05a.
+- **Known issue:** the nested app bind mount has no `.git` in the devcontainer;
+  the normal post-attach marketplace setup also needs unavailable SSH access.
+- **Next action:** after approved 05a work, rerun
+  `devcontainer exec --workspace-folder apps/engineering-cockpit -- bash -lc
+  'cd /workspaces/app && uv lock --check && pre-commit run --all-files'`, then
+  repeat Task 6 final review.
 
 ## Update rules
 
