@@ -42,14 +42,40 @@ grep -qi microsoft /proc/version
 bash scripts/cockpit-services-up.sh
 cd backend
 uv run alembic upgrade head
+
+backend_pid=""
+frontend_pid=""
+cleanup() {
+  kill "$backend_pid" "$frontend_pid" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
 uv run uvicorn backend.main:app \
   --host 127.0.0.1 \
   --port "${COCKPIT_BACKEND_PORT:-8000}" \
   --workers 1 &
 backend_pid=$!
+
+backend_url="http://127.0.0.1:${COCKPIT_BACKEND_PORT:-8000}/api/v1/utils/health-check/"
+backend_ready=0
+for _ in {1..50}; do
+  if ! kill -0 "$backend_pid" 2>/dev/null; then
+    wait "$backend_pid" 2>/dev/null || true
+    die "backend exited before becoming ready"
+  fi
+  if curl --fail --silent --max-time 1 "$backend_url" >/dev/null 2>&1; then
+    backend_ready=1
+    break
+  fi
+  sleep 0.2
+done
+
+if (( backend_ready == 0 )); then
+  die "backend did not become ready"
+fi
+
 cd ../frontend
 bun run dev --host 127.0.0.1 \
   --port "${COCKPIT_FRONTEND_PORT:-5173}" &
 frontend_pid=$!
-trap 'kill "$backend_pid" "$frontend_pid" 2>/dev/null || true' EXIT INT TERM
 wait -n "$backend_pid" "$frontend_pid"
