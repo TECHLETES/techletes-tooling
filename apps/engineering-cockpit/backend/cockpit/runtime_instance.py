@@ -16,6 +16,7 @@ class RuntimeInstanceAlreadyRunning(RuntimeError):
     """Raised when another process owns the cockpit runtime lock."""
 
     def __init__(self, path: Path, metadata: dict[str, Any] | None = None) -> None:
+        """Initialize the error with the lock path and recorded metadata."""
         self.path = path
         self.metadata = metadata or {}
         pid = self.metadata.get("pid", "unknown")
@@ -30,6 +31,7 @@ class RuntimeInstanceLock:
     _application_version: ClassVar[str] = APPLICATION_VERSION
 
     def __init__(self, path: Path, file: Any) -> None:
+        """Initialize a held runtime lock for ``path`` and its file handle."""
         self.path = path
         self._file = file
         self._released = False
@@ -118,7 +120,9 @@ class RuntimeInstanceLock:
             self._file.close()
 
     def __enter__(self) -> RuntimeInstanceLock:
+        """Return the held lock for use in a context manager."""
         return self
 
     def __exit__(self, *_: object) -> None:
+        """Release the lock when leaving a context manager."""
         self.release()
