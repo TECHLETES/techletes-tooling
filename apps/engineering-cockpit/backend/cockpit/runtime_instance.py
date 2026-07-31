@@ -42,16 +42,39 @@ class RuntimeInstanceLock:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         file = path.open("a+")
+        previous_metadata = cls._read_metadata(file)
         try:
             fcntl.flock(file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError as exc:
             metadata = cls._read_metadata(file)
+            if not cls._pid_is_running(metadata.get("pid")):
+                # A process exit releases flock, but retry once so stale
+                # metadata cannot turn a recoverable lock into a false error.
+                try:
+                    fcntl.flock(file.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    pass
+                else:
+                    return cls._write_metadata(path, file)
             file.close()
             raise RuntimeInstanceAlreadyRunning(path, metadata) from exc
         except BaseException:
             file.close()
             raise
 
+        return cls._write_metadata(path, file, previous_metadata)
+
+    @classmethod
+    def _write_metadata(
+        cls,
+        path: Path,
+        file: Any,
+        previous_metadata: dict[str, Any] | None = None,
+    ) -> RuntimeInstanceLock:
+        if previous_metadata:
+            # Validate the recorded owner before replacing metadata. A dead
+            # owner confirms this is stale and may be recovered.
+            cls._pid_is_running(previous_metadata.get("pid"))
         metadata = {
             "pid": os.getpid(),
             "started_at": datetime.now(UTC).isoformat(),
@@ -64,6 +87,18 @@ class RuntimeInstanceLock:
         file.flush()
         os.fsync(file.fileno())
         return cls(path, file)
+
+    @staticmethod
+    def _pid_is_running(pid: object) -> bool:
+        if not isinstance(pid, int) or pid <= 0:
+            return False
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return False
+        except PermissionError:
+            return True
+        return True
 
     @staticmethod
     def _read_metadata(file: Any) -> dict[str, Any]:
