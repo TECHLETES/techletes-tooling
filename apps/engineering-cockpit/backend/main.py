@@ -1,6 +1,7 @@
 """Backend application entrypoint and FastAPI app setup."""
 
 import logging
+import os
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,6 +12,10 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from backend.api.main import api_router
+from backend.cockpit.runtime_instance import (
+    RuntimeInstanceAlreadyRunning,
+    RuntimeInstanceLock,
+)
 from backend.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -24,6 +29,16 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     """Application startup and shutdown events."""
+    lock_path = Path(
+        os.environ.get(
+            "COCKPIT_INSTANCE_LOCK_PATH", "/tmp/techletes-engineering-cockpit.lock"
+        )
+    )
+    try:
+        instance_lock = RuntimeInstanceLock.acquire(lock_path)
+    except RuntimeInstanceAlreadyRunning as exc:
+        logger.error("%s", exc)
+        raise
     logger.info("""
 ╔══════════════════════════════════════════════════════════════════════════════════════╗
 ║                                      Powered by                                      ║
@@ -37,7 +52,10 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
 ║                                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════════════════════╝
     """)
-    yield
+    try:
+        yield
+    finally:
+        instance_lock.release()
 
 
 app = FastAPI(
