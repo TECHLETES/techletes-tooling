@@ -2,16 +2,16 @@
 schema_version: 1
 project: techletes-engineering-cockpit
 planning_issue: TECHLETES/techletes-tooling#7
-updated_at: 2026-07-31T18:25:00+02:00
+updated_at: 2026-07-31T23:10:00+02:00
 updated_by: controller
 current_phase: "Phase 0 - bootstrap"
 current_subsystem: "01"
 current_plan: "superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md"
-current_status: verification_pending
+current_status: complete
 working_branch: feature/cockpit-01-bootstrap
 working_worktree: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
-last_verified_commit: 1c4321c
-next_action: "Run final whole-branch review, then hand off the verified subsystem branch for local merge/push."
+last_verified_commit: 5a829aa
+next_action: "Hand off feature/cockpit-01-bootstrap for local integration and push by the user; do not start subsystem 02 in this session."
 blockers: []
 ---
 
@@ -27,13 +27,13 @@ Git history, the current child implementation plan, `.superpowers/sdd/progress.m
 | --- | --- |
 | Phase | Phase 0 — bootstrap |
 | Active subsystem | 01 — Template bootstrap and WSL runtime topology |
-| Status | In progress |
+| Status | Complete |
 | Branch | `feature/cockpit-01-bootstrap` |
 | Worktree | `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap` |
-| Last verified commit | `1c4321c` |
-| Last verification | Host full baseline and focused final-fix checks — PASS; fresh Luna re-review found no code defect |
-| Immediate next action | Resolve the subsystem 05a Git-metadata mount dependency, then rerun Task 6 in-container pre-commit |
-| Blockers | Task 6 in-container pre-commit needs the later 05a linked-worktree Git metadata mount |
+| Last verified commit | `b55e94f` |
+| Last verification | Host baseline, devcontainer lock baseline, focused closeout regressions, and full quality checks — PASS |
+| Immediate next action | Hand off the verified branch for local integration and push by the user |
+| Blockers | None for subsystem 01; target-project Git metadata mounting remains subsystem 05a scope |
 
 ## Subsystem progress
 
@@ -41,7 +41,7 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 | ID | Subsystem | Status | Branch/PR | Evidence or next gate |
 | --- | --- | --- | --- | --- |
-| 01 | Template bootstrap and WSL runtime topology | blocked | `feature/cockpit-01-bootstrap` | All code and host checks pass; Task 6 in-container pre-commit awaits subsystem 05a Git-metadata mount |
+| 01 | Template bootstrap and WSL runtime topology | complete | `feature/cockpit-01-bootstrap` | Tasks 1–6 and closeout review evidence committed through `b55e94f` |
 | 02 | Repository registry, configuration, and diagnostics | not_started | — | Requires 01 |
 | 03 | Task domain, PostgreSQL persistence, state, and locking | not_started | — | Requires 01–02 |
 | 04 | Git worktrees, branches, synchronization, overlap, and removal | not_started | — | Requires 03 |
@@ -70,7 +70,9 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 ### Current unchecked task
 
-Start at the first unchecked task in the subsystem 01 implementation plan. The canonical subsystem branch is `feature/cockpit-01-bootstrap`; do not infer completion from the planning commits.
+There is no unchecked Task 6 step remaining in the active subsystem plan. The
+canonical subsystem branch is `feature/cockpit-01-bootstrap`; do not infer
+completion from planning commits alone.
 
 The Sol/Terra controller must initialize the task rows in `.superpowers/sdd/progress.md`, then dispatch fresh Luna Medium implementers and reviewers according to `DEVELOPMENT_ORCHESTRATION.md`.
 
@@ -120,15 +122,15 @@ Controller model: Sol/Terra
 Active plan consent: confirmed
 Branch: feature/cockpit-01-bootstrap
 Worktree path: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
-HEAD: 1c4321c
-Working tree: dirty (controller state, Task 6 verification evidence, plan/spec correction)
-Uncommitted files: `PROJECT_STATE.md`, `SESSION_LOG.md`, `.superpowers/sdd/progress.md`, `docs/bootstrap-verification.md`, active 01 spec/plan
-Current plan task: Task 6 — Complete baseline verification
+HEAD: 5a829aa
+Working tree: clean
+Uncommitted files: none
+Current plan task: Task 6 — Complete baseline verification (complete)
 Active subagent role/task: None
-Last reviewed task: Final whole-branch Luna re-review — code findings resolved
-Last command run: focused identity/preflight/concurrent-launch/runtime-lock checks
+Last reviewed task: Closeout fixes — controller verification passed
+Last command run: focused launcher and CI-safe post-attach regression suite
 Last command result: PASS
-Next exact command/action: Implement the approved subsystem 05a Git-metadata mount, then rerun `devcontainer exec ... pre-commit run --all-files`.
+Next exact command/action: Hand off the clean branch without starting subsystem 02.
 
 For future checkpoints, replace this section with current values in this form:
 

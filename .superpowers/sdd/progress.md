@@ -26,7 +26,7 @@ It is part of the repository implementation workflow only. It is not application
 | Worktree | `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap` |
 | Plan base commit | `f964d91c0b76fadb0187284b6c65bb16037c45bc` |
 | Controller session | Sol/Terra controller, 2026-07-31 |
-| Status | blocked |
+| Status | complete |
 
 ## Task ledger
 
@@ -48,11 +48,11 @@ interrupted
 | Task | Status | Base SHA | Implementer commit(s) | Implementer report | Review package | Reviewer result | Remaining findings | Next action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | review_passed | f964d91c0b76fadb0187284b6c65bb16037c45bc | `2f4af78d6a0562d298f26dc396fb49da3f3462c3`, `f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095` | `.superpowers/sdd/task-1-report.md` | `.superpowers/sdd/review-f964d91..f7b61d7.diff` | Luna Medium re-review approved | None | Create separate worktrees for parallel Tasks 2–5 |
-| 2 | review_passed | 13fb810 | `dc87d30`, `dba8732` | committed report | batch package | Luna approved | None | Complete Task 6 |
-| 3 | review_passed | 13fb810 | `43711d6` | committed implementation | batch package | Luna approved | None | Complete Task 6 |
-| 4 | review_passed | 13fb810 | `21b2db8`, `8e8351c`, `391fb46`, `3307b4e`, `46cb10f`, `1c4321c` | committed reports | batch and final packages | Luna fixes verified | None | Complete Task 6 |
-| 5 | review_passed | 13fb810 | `43b7060` | committed implementation | batch package | Luna approved | None | Complete Task 6 |
-| 6 | blocked | 1c4321c | evidence pending commit | `docs/bootstrap-verification.md` | final review | Luna found only state/dependency gate | In-container pre-commit requires 05a Git metadata mount | Await approved 05a dependency resolution |
+| 2 | review_passed | 13fb810 | `dc87d30`, `dba8732` | committed report | batch package | Luna approved | None | Subsystem 01 complete |
+| 3 | review_passed | 13fb810 | `43711d6` | committed implementation | batch package | Luna approved | None | Subsystem 01 complete |
+| 4 | review_passed | 13fb810 | `21b2db8`, `8e8351c`, `391fb46`, `3307b4e`, `46cb10f`, `1c4321c` | committed reports | batch and final packages | Luna fixes verified | None | Subsystem 01 complete |
+| 5 | review_passed | 13fb810 | `43b7060` | committed implementation | batch package | Luna approved | None | Subsystem 01 complete |
+| 6 | review_passed | 1c4321c | `b55e94f` | `docs/bootstrap-verification.md`, `.superpowers/sdd/closeout-fix-report.md` | closeout package | Controller verification passed; prior review findings resolved | None for subsystem 01; target-project metadata remains 05a scope | Hand off subsystem branch |
 
 ## Minor findings for final review
 
@@ -67,11 +67,11 @@ Record reviewer findings intentionally deferred to the final whole-branch review
 | Field | Value |
 | --- | --- |
 | Merge base | `f964d91` |
-| Review package | Controller-reviewed committed diff through `1c4321c` |
-| Reviewer | Fresh Luna Medium reviews and re-reviews |
-| Result | code approved; subsystem blocked on Task 6 / 05a dependency |
-| Fix report | — |
-| Re-review result | — |
+| Review package | Controller-reviewed committed diff through `b55e94f` |
+| Reviewer | Prior Luna reviews plus controller closeout verification |
+| Result | approved for subsystem 01 handoff |
+| Fix report | `apps/engineering-cockpit/.superpowers/sdd/closeout-fix-report.md` |
+| Re-review result | Focused launcher, lock, concurrency, readiness, preflight, and CI-safe post-attach checks passed |
 
 ## Historical controller checkpoint — 2026-07-31 17:18 Europe/Amsterdam
 
@@ -116,24 +116,28 @@ do not start them on this branch.
   commits onto this branch; then run Task 6 commands from
   `apps/engineering-cockpit` and update `docs/bootstrap-verification.md`.
 
-## Current controller checkpoint — 2026-07-31 18:25 Europe/Amsterdam
+## Current controller checkpoint — 2026-07-31 23:10 Europe/Amsterdam
 
 - **Objective:** complete subsystem 01 only; do not start later subsystems.
-- **Completed:** Tasks 1–5 are reviewed; all final code-review findings are
-  fixed through `1c4321c`; host services, launcher, preflight, backend,
-  frontend, and repository pre-commit baseline pass.
-- **Current work:** Task 6 is blocked only at the exact devcontainer
-  `pre-commit run --all-files` gate.
-- **Files changed:** committed implementation through `1c4321c`; handoff and
-  verification evidence through `0edaf13`.
-- **Decision:** do not add the linked-worktree Git common-directory mount in
-  subsystem 01 because its architecture and test contract belong to 05a.
-- **Known issue:** the nested app bind mount has no `.git` in the devcontainer;
-  the normal post-attach marketplace setup also needs unavailable SSH access.
-- **Next action:** after approved 05a work, rerun
-  `devcontainer exec --workspace-folder apps/engineering-cockpit -- bash -lc
-  'cd /workspaces/app && uv lock --check && pre-commit run --all-files'`, then
-  repeat Task 6 final review.
+- **Completed:** Tasks 1–6 and closeout fixes are integrated through `b55e94f`.
+  Host runtime, migration ordering, duplicate-launch rejection, preflight,
+  serial backend tests, frontend, devcontainer lock baseline, full pre-commit,
+  and focused post-attach checks pass.
+- **Current work:** Subsystem 01 closeout records are being committed for handoff.
+- **Files changed:** closeout launcher/tests/report in `b55e94f`; controller
+  state and verification records in the pending handoff commit.
+- **Decision:** the inherited devcontainer is development-only. Target-project
+  devcontainers and linked-worktree Git metadata mounting remain future 05/05a
+  scope and are not implemented here.
+- **Known issue:** normal private marketplace post-attach requires external SSH
+  credentials; the safe `DEVCONTAINER_CI=true` path is covered and the skipped
+  private setup is documented. The inherited backend lint script still reports
+  its existing unrestricted-mypy test/migration baseline; configured pre-commit
+  typing passes. Parallel xdist tests also conflict with the singleton lock,
+  so the verified test command uses `-n 0`.
+- **Blockers:** None for subsystem 01.
+- **Next action:** commit the controller closeout records, then hand off the
+  verified subsystem branch without starting subsystem 02.
 
 ## Update rules
 

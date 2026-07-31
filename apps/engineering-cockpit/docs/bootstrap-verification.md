@@ -2,6 +2,8 @@
 
 Verification date: 2026-07-31
 
+Closeout fix commit: `b55e94f`
+
 ## Provenance
 
 - Template: `TECHLETES/full-stack-template`
@@ -35,14 +37,21 @@ Verification date: 2026-07-31
 | `docker info >/dev/null` | Passed | Exit code `0`. |
 | `uv lock --check` | Passed | Exit code `0` from `apps/engineering-cockpit`. |
 | `pre-commit run --all-files` | Passed | All configured cockpit hooks passed. |
-| `backend/scripts/test.sh` | Passed | Host-loopback database/Redis overrides; exit code `0`. |
-| `backend/scripts/lint.sh` | Passed | Black, mypy, Ruff, and Ruff-format checks; exit code `0`. |
+| `backend/scripts/test.sh -n 0` | Passed | With `AZURE_TENANT_ID=test-tenant` and host test containers; 206 passed, 8 skipped. Serial execution is required because the app intentionally enforces one runtime lock. |
+| `backend/scripts/lint.sh` | Known inherited baseline deviation | Black passed, but the script's unrestricted mypy invocation reports existing untyped migration/test-helper errors. The configured pre-commit mypy hook passed. |
 | `frontend bun run lint` | Passed | Exit code `0`. |
 | `frontend bun run typecheck` | Passed | Exit code `0`. |
 | `frontend bun run build` | Passed | Exit code `0`. |
+| Launcher migration ordering | Passed | Focused regression verifies migrations execute before Uvicorn is execed while the inherited runtime lock remains held. |
+| CI-safe post-attach behavior | Passed | Focused regression verifies `DEVCONTAINER_CI=true` skips private plugin setup and performs no template-remote or network setup. |
 
 No credentials or complete environment dumps are included. The devcontainer Git
 metadata gap is a recorded dependency contradiction between this Task 6
 baseline and the later subsystem 05a ownership boundary; it must be resolved
 by an approved plan correction before subsystem 01 can satisfy that exact
 in-container pre-commit step.
+
+The normal parallel `backend/scripts/test.sh` invocation also conflicts with
+the newly enforced singleton runtime lock because multiple xdist workers start
+the FastAPI lifespan concurrently. The verified baseline uses `-n 0`; changing
+test parallelism or lock semantics is outside this closeout scope.

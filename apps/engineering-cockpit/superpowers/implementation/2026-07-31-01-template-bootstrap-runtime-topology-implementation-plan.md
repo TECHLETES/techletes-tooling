@@ -498,7 +498,7 @@ runtime for managed projects or Codex sessions. Later subsystem 05a owns
 runtime-derived Git metadata mounts for each managed target project and its
 own devcontainer. Do not implement that target-project runtime behavior here.
 
-- [ ] **Step 1: Verify inherited devcontainer**
+- [x] **Step 1: Verify inherited devcontainer**
 
 ```bash
 devcontainer up --workspace-folder apps/engineering-cockpit
@@ -506,7 +506,7 @@ devcontainer up --workspace-folder apps/engineering-cockpit
 
 Expected final JSON includes `"outcome":"success"`, a container ID, and `remoteWorkspaceFolder` `/workspaces/app`.
 
-- [ ] **Step 2: Run backend baseline inside the devcontainer**
+- [x] **Step 2: Run backend baseline inside the devcontainer**
 
 ```bash
 devcontainer exec --workspace-folder apps/engineering-cockpit -- \
@@ -517,7 +517,7 @@ Expected: exit `0`. The repository-wide `pre-commit run --all-files` baseline
 is executed from the host checkout in Step 5. Target-project Git metadata
 compatibility inside task devcontainers is verified by subsystem 05a.
 
-- [ ] **Step 3: Run host-mode baseline**
+- [x] **Step 3: Run host-mode baseline**
 
 ```bash
 cd apps/engineering-cockpit
@@ -535,11 +535,11 @@ devcontainer --version
 
 Expected: both HTTP requests succeed and Docker/Dev Container CLI are visible from WSL.
 
-- [ ] **Step 4: Document exact verified versions and deviations**
+- [x] **Step 4: Document exact verified versions and deviations**
 
 Record template commit, Python, uv, Bun, Node, Docker, Dev Container CLI, and Codex versions in `docs/bootstrap-verification.md`. Do not record credentials or complete environment dumps.
 
-- [ ] **Step 5: Run full preflight and commit**
+- [x] **Step 5: Run full preflight and commit**
 
 ```bash
 cd apps/engineering-cockpit

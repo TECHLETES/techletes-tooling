@@ -107,3 +107,30 @@ Rules:
 - **Blockers:** Approved 05a dependency is required to satisfy the exact in-container pre-commit gate.
 - **Working tree:** dirty; controller state, verification evidence, and plan/spec clarification pending handoff commit.
 - **Next action:** Resolve the 05a metadata-mount dependency, then rerun the Task 6 in-container baseline and final review.
+
+## 2026-07-31 23:10 Europe/Amsterdam — Subsystem 01 closeout
+
+- **Subsystem:** 01 — Template bootstrap and WSL runtime topology
+- **Branch:** `feature/cockpit-01-bootstrap`
+- **Start HEAD:** `f6a8414`
+- **End HEAD:** `5a829aa`
+- **Plan step:** Task 6 and closeout fixes
+- **Completed:** Migrations now run while the inherited runtime lock is held,
+  before Uvicorn becomes available. The obsolete post-attach template-remote
+  regression now tests the current CI-safe behavior. Focused launcher,
+  readiness, lock, concurrency, preflight, and post-attach checks pass.
+- **Files changed:** `scripts/cockpit-dev.sh`, focused launcher/post-attach tests,
+  `.superpowers/sdd/closeout-fix-report.md`, and the committed controller state,
+  plan, verification, and session records through `5a829aa`.
+- **Verification:** focused suite, shell syntax, `git diff --check`, serial
+  backend tests (206 passed, 8 skipped), frontend checks, and pre-commit — PASS.
+  The unrestricted backend lint script still reports inherited mypy errors in
+  migrations/tests; configured pre-commit typing passes.
+- **Decisions/findings:** The cockpit devcontainer is development-only. Managed
+  projects use their own devcontainers; target-project Git metadata mounting is
+  05/05a scope. Private marketplace setup is external-credential dependent,
+  while `DEVCONTAINER_CI=true` is verified safely.
+- **Blockers:** None for subsystem 01.
+- **Working tree:** clean.
+- **Next action:** Hand off locally; do not
+  push or start subsystem 02 in this session.
