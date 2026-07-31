@@ -120,36 +120,39 @@ conflicts that only emerge from implementation.
 
 ## Model Selection
 
-Use the least powerful model that can handle each role to conserve cost and increase speed.
+**Every subagent MUST use `gpt-5.6-luna` with medium reasoning.** This applies
+to exploration, implementation, review, fix, and final-review subagents.
+Specify both settings explicitly on every dispatch:
 
-**Mechanical implementation tasks** (isolated functions, clear specs, 1-2 files): use a fast, cheap model. Most implementation tasks are mechanical when the plan is well-specified.
+```yaml
+model: gpt-5.6-luna
+reasoning_effort: medium
+```
 
-**Integration and judgment tasks** (multi-file coordination, pattern matching, debugging): use a standard model.
+Do not substitute another model, omit either setting, or inherit the session's
+defaults. This fixed policy applies regardless of task size or complexity.
 
-**Architecture and design tasks**: use the most capable available model.
-The final whole-branch review is one of these — dispatch it on the most
-capable available model, not the session default.
+**Model selection is fixed:** use `gpt-5.6-luna` with medium reasoning for
+every subagent, regardless of task role or complexity.
 
-**Review tasks**: choose the model with the same judgment, scaled to the
-diff's size, complexity, and risk. A small mechanical diff does not need the
-most capable model; a subtle concurrency change does.
+Specify these settings explicitly on every dispatch:
 
-**Always specify the model explicitly when dispatching a subagent.** An
-omitted model inherits your session's model — often the most capable and
-most expensive — which silently defeats this section.
+```yaml
+model: gpt-5.6-luna
+reasoning_effort: medium
+```
 
-**Turn count beats token price.** Wall-clock and context cost scale with how
-many turns a subagent takes, and the cheapest models routinely take 2-3× the
-turns on multi-step work — costing more overall. Use a mid-tier model as the
-floor for reviewers and for implementers working from prose descriptions.
-When the task's plan text contains the complete code to write, the
-implementation is transcription plus testing: use the cheapest tier for
-that implementer. Single-file mechanical fixes also take the cheapest tier.
+Do not substitute another model, omit either setting, or inherit the session's
+defaults.
 
-**Task complexity signals (implementation tasks):**
-- Touches 1-2 files with a complete spec → cheap model
-- Touches multiple files with integration concerns → standard model
-- Requires design judgment or broad codebase understanding → most capable model
+## Worktree Isolation
+
+Run sequential tasks in the current checkout; no per-subagent worktree is
+needed. If implementation subagents work on separate features in parallel,
+each MUST use its own git worktree. Create and assign the worktrees before
+dispatching them, pass each absolute worktree path in its prompt, and never
+let parallel implementers share a checkout. The main agent/session owns
+integration and may merge the completed worktrees at the end.
 
 ## Handling Implementer Status
 
@@ -398,7 +401,8 @@ Done!
 - Start implementation on main/master branch without explicit user consent
 - Skip task review, or accept a report missing either verdict (spec compliance AND task quality are both required)
 - Proceed with unfixed issues
-- Dispatch multiple implementation subagents in parallel (conflicts)
+- Dispatch parallel implementation subagents without a separate git worktree
+  for each one
 - Make a subagent read the whole plan file (hand it its task brief —
   `scripts/task-brief` — instead)
 - Skip scene-setting context (subagent needs to understand where task fits)

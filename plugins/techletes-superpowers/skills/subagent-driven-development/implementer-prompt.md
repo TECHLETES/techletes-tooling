@@ -5,8 +5,8 @@ Use this template when dispatching an implementer subagent.
 ```
 Subagent (general-purpose):
   description: "Implement Task N: [task name]"
-  model: [MODEL — REQUIRED: choose per SKILL.md Model Selection; an omitted
-         model silently inherits the session's most expensive one]
+  model: gpt-5.6-luna
+  reasoning_effort: medium
   prompt: |
     You are implementing Task N: [task name]
 
@@ -39,7 +39,10 @@ Subagent (general-purpose):
     5. Self-review (see below)
     6. Report back
 
-    Work from: [directory]
+    Work from: [directory]. If this task is one of multiple implementation
+    tasks running in parallel, [directory] MUST be this subagent's dedicated
+    git worktree; never modify a shared checkout. Sequential tasks may use the
+    current checkout without a dedicated worktree.
 
     **While you work:** If you encounter something unexpected or unclear, **ask questions**.
     It's always OK to pause and clarify. Don't guess or make assumptions.
