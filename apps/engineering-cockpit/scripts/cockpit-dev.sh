@@ -36,9 +36,7 @@ export POSTGRES_SERVER="${POSTGRES_SERVER:-127.0.0.1}"
 export POSTGRES_PORT="${POSTGRES_PORT:-${COCKPIT_POSTGRES_PORT:-55432}}"
 export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:${COCKPIT_REDIS_PORT:-56379}/0}"
 
-[[ "$(uname -s)" == "Linux" ]]
-grep -qi microsoft /proc/version
-
+bash scripts/cockpit-preflight.sh
 bash scripts/cockpit-services-up.sh
 cd backend
 

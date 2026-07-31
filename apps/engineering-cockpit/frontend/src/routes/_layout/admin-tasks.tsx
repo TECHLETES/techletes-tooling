@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_layout/admin-tasks")({
   head: () => ({
     meta: [
       {
-        title: `${i18n.t("dashboard.tasks.page.metaTitle")} - Fullstack Template`,
+        title: `${i18n.t("dashboard.tasks.page.metaTitle")} - Engineering Cockpit`,
       },
     ],
   }),

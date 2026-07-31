@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_layout/unauthorized")({
   head: () => ({
     meta: [
       {
-        title: `${i18n.t("unauthorized.metaTitle")} - Fullstack Template`,
+        title: `${i18n.t("unauthorized.metaTitle")} - Engineering Cockpit`,
       },
     ],
   }),

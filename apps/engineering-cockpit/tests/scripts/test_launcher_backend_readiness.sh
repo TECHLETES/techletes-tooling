@@ -7,6 +7,8 @@ trap 'rm -rf "${test_root}"' EXIT
 mkdir -p "${test_root}/scripts" "${test_root}/backend" "${test_root}/frontend" "${test_root}/bin"
 cp scripts/cockpit-dev.sh "${test_root}/scripts/cockpit-dev.sh"
 cp scripts/cockpit-services-up.sh "${test_root}/scripts/cockpit-services-up.sh"
+printf '#!/usr/bin/env bash\nexit 0\n' > "${test_root}/scripts/cockpit-preflight.sh"
+chmod +x "${test_root}/scripts/cockpit-preflight.sh"
 printf 'POSTGRES_PASSWORD=test-password\n' > "${test_root}/.env.local"
 
 cat > "${test_root}/bin/docker" <<'EOF'

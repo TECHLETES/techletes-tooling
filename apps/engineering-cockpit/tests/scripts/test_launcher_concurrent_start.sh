@@ -7,6 +7,8 @@ trap 'if [[ -n "${first_pid:-}" ]]; then kill "$first_pid" 2>/dev/null || true; 
 mkdir -p "$test_root/scripts" "$test_root/backend" "$test_root/frontend" "$test_root/bin"
 cp scripts/cockpit-dev.sh "$test_root/scripts/cockpit-dev.sh"
 cp scripts/cockpit-services-up.sh "$test_root/scripts/cockpit-services-up.sh"
+printf '#!/usr/bin/env bash\nexit 0\n' > "$test_root/scripts/cockpit-preflight.sh"
+chmod +x "$test_root/scripts/cockpit-preflight.sh"
 cp -R backend/cockpit "$test_root/backend/"
 printf 'POSTGRES_PASSWORD=test-password\n' > "$test_root/.env.local"
 
