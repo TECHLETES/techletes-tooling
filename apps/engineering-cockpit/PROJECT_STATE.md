@@ -2,17 +2,18 @@
 schema_version: 1
 project: techletes-engineering-cockpit
 planning_issue: TECHLETES/techletes-tooling#7
-updated_at: 2026-07-31T17:10:00+02:00
+updated_at: 2026-07-31T18:25:00+02:00
 updated_by: controller
 current_phase: "Phase 0 - bootstrap"
 current_subsystem: "01"
 current_plan: "superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md"
-current_status: in_progress
+current_status: blocked
 working_branch: feature/cockpit-01-bootstrap
 working_worktree: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
-last_verified_commit: f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095
-next_action: "Run independent Tasks 2–5 in separate worktrees from the reviewed Task 1 baseline, then consolidate review before Task 6."
-blockers: []
+last_verified_commit: 1c4321c
+next_action: "Resolve the approved subsystem 05a Git-metadata mount dependency, then rerun Task 6 in-container pre-commit and final review."
+blockers:
+  - "Task 6 requires in-container pre-commit, but the nested application devcontainer has no Git metadata; the required linked-worktree metadata mount is owned by subsystem 05a."
 ---
 
 # Engineering Cockpit Project State
@@ -30,10 +31,10 @@ Git history, the current child implementation plan, `.superpowers/sdd/progress.m
 | Status | In progress |
 | Branch | `feature/cockpit-01-bootstrap` |
 | Worktree | `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap` |
-| Last verified commit | `f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095` |
-| Last verification | Task 1 template snapshot completeness (377/377 files), secret scan, and Luna Medium re-review — PASS |
-| Immediate next action | Run independent Tasks 2–5 in separate worktrees, then consolidate review before Task 6 |
-| Blockers | None known |
+| Last verified commit | `1c4321c` |
+| Last verification | Host full baseline and focused final-fix checks — PASS; fresh Luna re-review found no code defect |
+| Immediate next action | Resolve the subsystem 05a Git-metadata mount dependency, then rerun Task 6 in-container pre-commit |
+| Blockers | Task 6 in-container pre-commit needs the later 05a linked-worktree Git metadata mount |
 
 ## Subsystem progress
 
@@ -41,7 +42,7 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 | ID | Subsystem | Status | Branch/PR | Evidence or next gate |
 | --- | --- | --- | --- | --- |
-| 01 | Template bootstrap and WSL runtime topology | in_progress | `feature/cockpit-01-bootstrap` | Task 1 snapshot/import in progress |
+| 01 | Template bootstrap and WSL runtime topology | blocked | `feature/cockpit-01-bootstrap` | All code and host checks pass; Task 6 in-container pre-commit awaits subsystem 05a Git-metadata mount |
 | 02 | Repository registry, configuration, and diagnostics | not_started | — | Requires 01 |
 | 03 | Task domain, PostgreSQL persistence, state, and locking | not_started | — | Requires 01–02 |
 | 04 | Git worktrees, branches, synchronization, overlap, and removal | not_started | — | Requires 03 |
@@ -117,15 +118,15 @@ Controller model: Sol/Terra
 Active plan consent: confirmed
 Branch: feature/cockpit-01-bootstrap
 Worktree path: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
-HEAD: f964d91c0b76fadb0187284b6c65bb16037c45bc
-Working tree: dirty (controller-owned durable-state initialization)
-Uncommitted files: `PROJECT_STATE.md`, `.superpowers/sdd/progress.md`
-Current plan task: Task 1 — Snapshot and import the current full-stack template
-Active subagent role/task: pending Luna Medium implementer dispatch
-Last reviewed task: None
-Last command run: task-brief Task 1 generation
-Last command result: PASS; `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap/.superpowers/sdd/task-1-brief.md`
-Next exact command/action: Dispatch the Task 1 Luna Medium implementer.
+HEAD: 1c4321c
+Working tree: dirty (controller state, Task 6 verification evidence, plan/spec correction)
+Uncommitted files: `PROJECT_STATE.md`, `SESSION_LOG.md`, `.superpowers/sdd/progress.md`, `docs/bootstrap-verification.md`, active 01 spec/plan
+Current plan task: Task 6 — Complete baseline verification
+Active subagent role/task: None
+Last reviewed task: Final whole-branch Luna re-review — code findings resolved
+Last command run: focused identity/preflight/concurrent-launch/runtime-lock checks
+Last command result: PASS
+Next exact command/action: Implement the approved subsystem 05a Git-metadata mount, then rerun `devcontainer exec ... pre-commit run --all-files`.
 
 For future checkpoints, replace this section with current values in this form:
 

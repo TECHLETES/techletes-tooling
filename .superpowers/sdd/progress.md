@@ -26,7 +26,7 @@ It is part of the repository implementation workflow only. It is not application
 | Worktree | `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap` |
 | Plan base commit | `f964d91c0b76fadb0187284b6c65bb16037c45bc` |
 | Controller session | Sol/Terra controller, 2026-07-31 |
-| Status | in_progress |
+| Status | blocked |
 
 ## Task ledger
 
@@ -48,11 +48,11 @@ interrupted
 | Task | Status | Base SHA | Implementer commit(s) | Implementer report | Review package | Reviewer result | Remaining findings | Next action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | review_passed | f964d91c0b76fadb0187284b6c65bb16037c45bc | `2f4af78d6a0562d298f26dc396fb49da3f3462c3`, `f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095` | `.superpowers/sdd/task-1-report.md` | `.superpowers/sdd/review-f964d91..f7b61d7.diff` | Luna Medium re-review approved | None | Create separate worktrees for parallel Tasks 2–5 |
-| 2 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
-| 3 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
-| 4 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
-| 5 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
-| 6 | pending | — | — | — | — | — | — | Verify the integrated Tasks 2–5 batch |
+| 2 | review_passed | 13fb810 | `dc87d30`, `dba8732` | committed report | batch package | Luna approved | None | Complete Task 6 |
+| 3 | review_passed | 13fb810 | `43711d6` | committed implementation | batch package | Luna approved | None | Complete Task 6 |
+| 4 | review_passed | 13fb810 | `21b2db8`, `8e8351c`, `391fb46`, `3307b4e`, `46cb10f`, `1c4321c` | committed reports | batch and final packages | Luna fixes verified | None | Complete Task 6 |
+| 5 | review_passed | 13fb810 | `43b7060` | committed implementation | batch package | Luna approved | None | Complete Task 6 |
+| 6 | blocked | 1c4321c | evidence pending commit | `docs/bootstrap-verification.md` | final review | Luna found only state/dependency gate | In-container pre-commit requires 05a Git metadata mount | Await approved 05a dependency resolution |
 
 ## Minor findings for final review
 
@@ -66,12 +66,59 @@ Record reviewer findings intentionally deferred to the final whole-branch review
 
 | Field | Value |
 | --- | --- |
-| Merge base | Not recorded |
-| Review package | Not generated |
-| Reviewer | Not dispatched |
-| Result | pending |
+| Merge base | `f964d91` |
+| Review package | Controller-reviewed committed diff through `1c4321c` |
+| Reviewer | Fresh Luna Medium reviews and re-reviews |
+| Result | code approved; subsystem blocked on Task 6 / 05a dependency |
 | Fix report | — |
 | Re-review result | — |
+
+## Current controller checkpoint — 2026-07-31
+
+### Objective and current requirements
+
+Complete the active subsystem 01 plan: a template-derived Engineering Cockpit,
+cockpit-specific identity and instructions, loopback support services, a
+single-worker WSL launcher, path-scoped CI, and the Task 6 devcontainer/host
+acceptance evidence. The broader product remains gated by later child plans;
+do not start them on this branch.
+
+- Tasks 2–5 were executed in separate worktrees from `13fb810`, then integrated
+  onto `feature/cockpit-01-bootstrap` through `391fb46`; the combined Luna
+  review passed after one runtime fix.
+- Task 6 produced uncommitted `apps/engineering-cockpit/docs/bootstrap-verification.md`
+  and `.superpowers/sdd/task-6-report.md`; it is blocked on Dev Container CLI
+  availability and local `.env.local` setup, and it also exposed project-local
+  pre-commit path, Task 4 formatting, and inherited mypy baseline failures.
+- Root-cause investigation classified frontend command failures as missing
+  `node_modules` (install from the committed Bun lockfile first). It confirmed
+  the pre-commit paths, formatting, and 20 mypy errors are repository fixes to
+  address before retrying Task 6.
+- Next: fix the confirmed repository issues, install frontend dependencies,
+  rerun narrow checks, then retry Task 6 when the external prerequisites are
+  available. No push, merge, or destructive cleanup has occurred.
+
+- 2026-07-31 blocker: two verified, explicitly staged fixes await signed
+  commits in `/home/thom/worktrees/techletes-tooling/cockpit-01-quality-config`
+  (pre-commit paths and Task 4 formatting) and
+  `/home/thom/worktrees/techletes-tooling/cockpit-01-quality-mypy` (20 mypy
+  errors; `uv run mypy --no-incremental` passes). Both `git commit` attempts
+  were blocked by the unavailable required 1Password SSH signing agent. Do not
+  use a signing bypass; restore the agent, commit each fix, then cherry-pick
+  both commits onto `feature/cockpit-01-bootstrap` before retrying Task 6.
+- Frontend dependencies were installed from `bun.lock`; `bun run lint`, `bun
+  run typecheck`, and `bun run build` passed on the subsystem branch. The
+  official Dev Container CLI was run through `bunx @devcontainers/cli` 0.88.0
+  without force options; its first startup built the inherited devcontainer,
+  which exposed remaining template identity defaults for later scoped review.
+- Resume commands: restore the 1Password SSH agent so `SSH_AUTH_SOCK` is set;
+  commit the staged fixes in the two quality worktrees; cherry-pick their
+  commits onto this branch; then run Task 6 commands from
+  `apps/engineering-cockpit` and update `docs/bootstrap-verification.md`.
+- Reconfirmed 2026-07-31: `SSH_AUTH_SOCK` remains unset and `ssh-add -L`
+  cannot connect to an authentication agent. This is an external signing
+  blocker, not a repository defect. No signing bypass, push, merge, or
+  cleanup was attempted.
 
 ## Update rules
 

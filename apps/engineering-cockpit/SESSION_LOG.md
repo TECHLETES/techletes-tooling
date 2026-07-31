@@ -77,3 +77,33 @@ Rules:
 - **Blockers:** None
 - **Working tree:** clean after the controller handoff commit
 - **Next action:** Create the subsystem 01 worktree from the corrected planning baseline.
+
+## 2026-07-31 17:18 Europe/Amsterdam — Bootstrap verification pending external signing
+
+- **Subsystem:** 01 — Template bootstrap and WSL runtime topology
+- **Branch:** `feature/cockpit-01-bootstrap`
+- **Start HEAD:** `13fb810`
+- **End HEAD:** `391fb46` plus uncommitted controller verification evidence
+- **Plan step:** Tasks 2–6
+- **Completed:** Integrated and batch-reviewed identity, loopback services, runtime launcher, and root CI changes. Frontend lint, typecheck, and build pass after locked dependency installation. Normal Dev Container CLI startup was attempted through `bunx`.
+- **Files changed:** See Git commits through `391fb46`; pending evidence is `docs/bootstrap-verification.md`, `PROJECT_STATE.md`, and `.superpowers/sdd/progress.md`.
+- **Verification:** `bun run lint && bun run typecheck && bun run build` — PASS
+- **Decisions/findings:** Do not bypass required SSH signing. Two verified staged quality fixes await the unavailable 1Password signing agent; Dev Container host acceptance still requires local `.env.local` configuration.
+- **Blockers:** `SSH_AUTH_SOCK` is unset; signed commits cannot be created. Restore the agent before integration.
+- **Working tree:** dirty; controller evidence/state only
+- **Next action:** Commit and integrate the signed quality fixes, then resume Task 6.
+
+## 2026-07-31 18:25 Europe/Amsterdam — Subsystem 01 host baseline and final review
+
+- **Subsystem:** 01 — Template bootstrap and WSL runtime topology
+- **Branch:** `feature/cockpit-01-bootstrap`
+- **Start HEAD:** `391fb46`
+- **End HEAD:** `1c4321c` plus controller handoff records
+- **Plan step:** Tasks 2–6 and final whole-branch review
+- **Completed:** Integrated local-only signed-disabled quality and final-review fixes; host runtime, duplicate-launch rejection, preflight, backend, frontend, and full pre-commit checks pass.
+- **Files changed:** Runtime/preflight/identity fixes in commits through `1c4321c`; `docs/bootstrap-verification.md`, state ledger, and active 01 spec/plan are controller records.
+- **Verification:** `pre-commit run --all-files`; host backend test/lint; frontend lint/typecheck/build; focused runtime/preflight/concurrency checks — PASS.
+- **Decisions/findings:** The nested devcontainer has no Git metadata. The required common-directory mount is owned by subsystem 05a; Task 6 in-container pre-commit is recorded blocked rather than bypassed.
+- **Blockers:** Approved 05a dependency is required to satisfy the exact in-container pre-commit gate.
+- **Working tree:** dirty; controller state, verification evidence, and plan/spec clarification pending handoff commit.
+- **Next action:** Resolve the 05a metadata-mount dependency, then rerun the Task 6 in-container baseline and final review.
