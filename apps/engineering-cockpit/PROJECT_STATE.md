@@ -2,7 +2,7 @@
 schema_version: 1
 project: techletes-engineering-cockpit
 planning_issue: TECHLETES/techletes-tooling#7
-updated_at: 2026-07-31T16:09:00+02:00
+updated_at: 2026-07-31T16:16:00+02:00
 updated_by: planning
 current_phase: "Phase 0 - bootstrap"
 current_subsystem: "01"
@@ -11,7 +11,7 @@ current_status: ready_to_start
 working_branch: null
 working_worktree: null
 last_verified_commit: null
-next_action: "Create the subsystem 01 branch/worktree and execute the first unchecked task in its implementation plan."
+next_action: "Create the subsystem 01 branch/worktree, start a Sol or Terra controller session, and explicitly authorize Subagent-Driven Development for the active child plan."
 blockers: []
 ---
 
@@ -19,7 +19,7 @@ blockers: []
 
 This file is the compact, durable handoff for the entire implementation. It must make a fresh Codex session or fresh clone productive without access to previous conversation history.
 
-Git history, the current child implementation plan, and test evidence remain authoritative. When this file disagrees with Git, reconcile it before implementation continues.
+Git history, the current child implementation plan, `.superpowers/sdd/progress.md`, and test/review evidence remain authoritative. When these sources disagree, reconcile them from Git evidence before implementation continues.
 
 ## Current checkpoint
 
@@ -31,8 +31,8 @@ Git history, the current child implementation plan, and test evidence remain aut
 | Branch | Not created yet |
 | Worktree | Not created yet |
 | Last verified commit | Planning package on `main` |
-| Last verification | Planning documents created and linked from issue #7 |
-| Immediate next action | Create the subsystem 01 worktree/branch and execute the first unchecked task |
+| Last verification | Planning documents, portable handoff files, and Sol/Terra controller/Luna Medium subagent workflow created |
+| Immediate next action | Create the subsystem 01 worktree, start Sol or Terra, and use the kickoff prompt in `CODEX_RUNBOOK.md` |
 | Blockers | None known |
 
 ## Subsystem progress
@@ -72,6 +72,8 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 Start at the first unchecked task in the subsystem 01 implementation plan. Do not infer completion from the planning commits.
 
+The Sol/Terra controller must initialize the task rows in `.superpowers/sdd/progress.md`, then dispatch fresh Luna Medium implementers and reviewers according to `DEVELOPMENT_ORCHESTRATION.md`.
+
 ### Required checkpoint evidence
 
 Before this state advances beyond subsystem 01, record:
@@ -82,9 +84,21 @@ Before this state advances beyond subsystem 01, record:
 - backend/frontend/devcontainer baseline verification commands and results;
 - host-native WSL startup proof;
 - single-instance locking proof;
+- per-task implementer/reviewer evidence in `.superpowers/sdd/progress.md`;
+- final whole-branch review result;
 - clean working tree and verified commit SHA.
 
 ## Active decisions and assumptions
+
+### Repository implementation workflow
+
+- Every human-started implementation session uses GPT-5.6 Sol or GPT-5.6 Terra as the controller.
+- The controller uses `techletes-superpowers:subagent-driven-development` for the active child plan after explicit user authorization.
+- Every exploration, implementation, review, fix, and final-review subagent uses `gpt-5.6-luna` with medium reasoning.
+- The controller owns planning, integration, review adjudication, state files, and exit-gate decisions.
+- This Sol/Terra/Luna policy is only for implementing the repository. It is not Engineering Cockpit product functionality.
+
+### Product and architecture
 
 - The application remains under `apps/engineering-cockpit/` in `TECHLETES/techletes-tooling`.
 - The source baseline is the current `TECHLETES/full-stack-template` at implementation time, recorded by exact commit.
@@ -104,12 +118,16 @@ No implementation worktree exists yet.
 When implementation begins, replace this section with:
 
 ```text
+Controller model: Sol|Terra
+Active plan consent: confirmed|not confirmed
 Branch:
 Worktree path:
 HEAD:
 Working tree: clean|dirty
 Uncommitted files:
-Current plan step:
+Current plan task:
+Active subagent role/task:
+Last reviewed task:
 Last command run:
 Last command result:
 Next exact command/action:
@@ -117,15 +135,16 @@ Next exact command/action:
 
 ## Update protocol
 
-Update this file at every verified checkpoint and before ending a Codex session.
+Update this file at every verified checkpoint and before ending a controller session.
 
 Required changes:
 
 1. Update front matter timestamp, status, branch/worktree, last verified commit, next action, and blockers.
 2. Update the active subsystem row.
-3. Record verification evidence and current handoff.
-4. Ensure the matching child-plan checkboxes agree.
-5. Append a session entry to `SESSION_LOG.md`.
-6. Commit the state with the verified implementation checkpoint when authorized.
+3. Reconcile `.superpowers/sdd/progress.md` with task reports, reviews, and child-plan checkboxes.
+4. Record verification evidence and current handoff.
+5. Ensure the matching child-plan checkboxes agree.
+6. Append a session entry to `SESSION_LOG.md`.
+7. Commit the state with the verified implementation checkpoint when authorized.
 
-Do not store secrets, copied credentials, raw environment dumps, or large terminal output here.
+Do not store secrets, copied credentials, raw environment dumps, large terminal output, or private chain-of-thought here.
