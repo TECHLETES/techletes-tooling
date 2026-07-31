@@ -38,6 +38,13 @@ The current full-stack template is copied into that directory without its Git hi
 
 The inherited devcontainer remains the canonical development and CI-like test environment for developers working on the cockpit source.
 
+When that inherited configuration is run from this repository's nested
+linked-worktree checkout, the application-only bind mount does not include Git
+metadata. The required canonical Git common-directory mount is owned by
+subsystem 05a; subsystem 01 records the resulting in-container pre-commit gate
+as blocked rather than adding an incompatible mount before that subsystem's
+contract is approved.
+
 ### Operational control plane
 
 The normal local cockpit daemon runs directly in WSL, not inside the cockpit's own devcontainer:

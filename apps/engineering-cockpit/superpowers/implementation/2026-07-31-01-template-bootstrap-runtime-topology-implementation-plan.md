@@ -18,6 +18,16 @@
 - Do not expose or copy secret values into committed files.
 - Do not remove inherited auth/RBAC/example features in this plan.
 
+### Task applicability
+
+These are subsystem exit constraints, not a direction to alter the imported
+template during Task 1. Task 1 must import and record the current template
+snapshot unchanged except for preserving `superpowers/` and adding source
+metadata. Task 2 owns project identity and documentation, Task 3 owns the
+loopback-only local support services, and Task 4 owns the single-worker,
+loopback-bound operational launcher. Review each task against its stated
+scope while preserving these constraints as the subsystem completion gate.
+
 ## Dependencies
 
 None. This is the first implementation plan.
@@ -44,7 +54,7 @@ None. This is the first implementation plan.
 **Interfaces:**
 - `.techletes-template-source.yml` contains exactly `repository`, `branch`, `commit`, and `imported_at`.
 
-- [ ] **Step 1: Create an isolated implementation worktree**
+- [x] **Step 1: Create an isolated implementation worktree**
 
 ```bash
 git fetch origin
@@ -56,7 +66,7 @@ cd ~/worktrees/techletes-tooling/cockpit-01-bootstrap
 
 Expected: `git branch --show-current` prints `feature/cockpit-01-bootstrap`.
 
-- [ ] **Step 2: Fetch the template into a temporary remote**
+- [x] **Step 2: Fetch the template into a temporary remote**
 
 ```bash
 git remote add full-stack-template https://github.com/TECHLETES/full-stack-template.git
@@ -67,7 +77,7 @@ printf '%s\n' "$TEMPLATE_COMMIT"
 
 Expected: a 40-character commit SHA.
 
-- [ ] **Step 3: Back up the planning directory and import the snapshot**
+- [x] **Step 3: Back up the planning directory and import the snapshot**
 
 ```bash
 mkdir -p /tmp/engineering-cockpit-superpowers
@@ -84,7 +94,7 @@ cp -a /tmp/engineering-cockpit-superpowers/. \
 
 Expected: `apps/engineering-cockpit/backend/main.py`, `frontend/package.json`, `.devcontainer/devcontainer.json`, and `superpowers/README.md` all exist.
 
-- [ ] **Step 4: Record source metadata**
+- [x] **Step 4: Record source metadata**
 
 Create `apps/engineering-cockpit/.techletes-template-source.yml`:
 
@@ -97,7 +107,7 @@ imported_at: 2026-07-31
 
 Replace `REPLACE_WITH_TEMPLATE_COMMIT` with the actual SHA from Step 2.
 
-- [ ] **Step 5: Verify no nested Git metadata was imported**
+- [x] **Step 5: Verify no nested Git metadata was imported**
 
 ```bash
 test ! -e apps/engineering-cockpit/.git
@@ -106,7 +116,7 @@ git status --short apps/engineering-cockpit | head -20
 
 Expected: the test exits `0`; imported files are shown as repository changes.
 
-- [ ] **Step 6: Commit the snapshot separately**
+- [x] **Step 6: Commit the snapshot separately**
 
 ```bash
 git add apps/engineering-cockpit
@@ -129,7 +139,7 @@ git commit -m "feat: bootstrap engineering cockpit from full-stack template"
 - Frontend package name: `engineering-cockpit-frontend`.
 - Devcontainer name: `Techletes Engineering Cockpit`.
 
-- [ ] **Step 1: Write the identity regression test**
+- [x] **Step 1: Write the identity regression test**
 
 Create `backend/tests/cockpit/test_project_identity.py`:
 
@@ -151,7 +161,7 @@ def test_template_identity_is_replaced() -> None:
     ).read_text()
 ```
 
-- [ ] **Step 2: Run the test and verify failure**
+- [x] **Step 2: Run the test and verify failure**
 
 ```bash
 cd apps/engineering-cockpit
@@ -160,7 +170,7 @@ uv run pytest backend/tests/cockpit/test_project_identity.py -v
 
 Expected: FAIL because template identifiers are still present.
 
-- [ ] **Step 3: Replace identity and documentation**
+- [x] **Step 3: Replace identity and documentation**
 
 Update the listed files. `AGENTS.md` must describe:
 
@@ -173,7 +183,7 @@ Update the listed files. `AGENTS.md` must describe:
 
 `README.md` must explain development mode, host operational mode, required WSL tools, and the issue link.
 
-- [ ] **Step 4: Scan for stale user-facing template identity**
+- [x] **Step 4: Scan for stale user-facing template identity**
 
 ```bash
 rg -n "full-stack-template|Fullstack Template|Full Stack FastAPI Template" \
@@ -183,7 +193,7 @@ rg -n "full-stack-template|Fullstack Template|Full Stack FastAPI Template" \
 
 Expected: no stale project identity remains; explanatory references to the source template are allowed only in the bootstrap section.
 
-- [ ] **Step 5: Run the regression test**
+- [x] **Step 5: Run the regression test**
 
 ```bash
 uv run pytest backend/tests/cockpit/test_project_identity.py -v
@@ -191,7 +201,7 @@ uv run pytest backend/tests/cockpit/test_project_identity.py -v
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/engineering-cockpit
@@ -212,7 +222,7 @@ git commit -m "docs: specialize engineering cockpit project identity"
 - Defaults: PostgreSQL `55432`, Redis `56379`.
 - Both ports bind only to `127.0.0.1`.
 
-- [ ] **Step 1: Write a failing shell configuration test**
+- [x] **Step 1: Write a failing shell configuration test**
 
 Create `tests/scripts/test_local_services_config.sh`:
 
@@ -227,7 +237,7 @@ grep -F '127.0.0.1:${COCKPIT_REDIS_PORT:-56379}:6379' "$compose_file"
 ! grep -E '(^|[[:space:]])-[[:space:]]*"?(0\.0\.0\.0:)?(5432|6379):' "$compose_file"
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 bash tests/scripts/test_local_services_config.sh
@@ -235,7 +245,7 @@ bash tests/scripts/test_local_services_config.sh
 
 Expected: FAIL because the Compose file does not exist.
 
-- [ ] **Step 3: Create the service Compose file**
+- [x] **Step 3: Create the service Compose file**
 
 ```yaml
 name: techletes-engineering-cockpit
@@ -270,11 +280,11 @@ volumes:
   cockpit-postgres-data:
 ```
 
-- [ ] **Step 4: Add safe launch scripts**
+- [x] **Step 4: Add safe launch scripts**
 
 `cockpit-services-up.sh` must load `.env.local`, validate required values, run `docker compose ... up -d --wait`, and print loopback endpoints without printing passwords. `cockpit-services-down.sh` must run `down` without `--volumes` unless a separate explicit destructive command is added later.
 
-- [ ] **Step 5: Validate rendered Compose configuration**
+- [x] **Step 5: Validate rendered Compose configuration**
 
 ```bash
 POSTGRES_PASSWORD=test-only \
@@ -284,7 +294,7 @@ bash tests/scripts/test_local_services_config.sh
 
 Expected: PASS and no `0.0.0.0` binding in `/tmp/cockpit-compose.yml`.
 
-- [ ] **Step 6: Start and health-check services**
+- [x] **Step 6: Start and health-check services**
 
 ```bash
 cp .env.local.example .env.local
@@ -295,7 +305,7 @@ docker compose -f docker-compose.local-services.yml ps
 
 Expected: `db` and `redis` report healthy.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/engineering-cockpit
@@ -314,7 +324,7 @@ git commit -m "build: add cockpit local support services"
 - A second live process receives `RuntimeInstanceAlreadyRunning`.
 - Stale lock metadata is recoverable after PID validation.
 
-- [ ] **Step 1: Write tests for live and stale locks**
+- [x] **Step 1: Write tests for live and stale locks**
 
 ```python
 from pathlib import Path
@@ -342,7 +352,7 @@ def test_released_lock_can_be_reacquired(tmp_path: Path) -> None:
     RuntimeInstanceLock.acquire(path).release()
 ```
 
-- [ ] **Step 2: Run and verify failure**
+- [x] **Step 2: Run and verify failure**
 
 ```bash
 uv run pytest backend/tests/cockpit/test_runtime_instance.py -v
@@ -350,11 +360,11 @@ uv run pytest backend/tests/cockpit/test_runtime_instance.py -v
 
 Expected: FAIL because the module does not exist.
 
-- [ ] **Step 3: Implement an OS file lock**
+- [x] **Step 3: Implement an OS file lock**
 
 Use `fcntl.flock(..., LOCK_EX | LOCK_NB)` on Linux. Store non-secret JSON metadata containing PID, start time, and application version. Hold the file descriptor for the process lifetime.
 
-- [ ] **Step 4: Implement `scripts/cockpit-dev.sh`**
+- [x] **Step 4: Implement `scripts/cockpit-dev.sh`**
 
 The script must:
 
@@ -386,7 +396,7 @@ wait -n "$backend_pid" "$frontend_pid"
 
 Integrate the Python instance lock during application lifespan, not solely in Bash.
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 ```bash
 uv run pytest backend/tests/cockpit/test_runtime_instance.py -v
@@ -394,11 +404,11 @@ uv run pytest backend/tests/cockpit/test_runtime_instance.py -v
 
 Expected: PASS.
 
-- [ ] **Step 6: Manually verify second-instance rejection**
+- [x] **Step 6: Manually verify second-instance rejection**
 
 Start `scripts/cockpit-dev.sh`, then in another terminal run the same script. Expected: the second backend exits with a clear “control plane already running” diagnostic without stopping the first.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/engineering-cockpit
@@ -415,13 +425,13 @@ git commit -m "feat: add single-instance WSL cockpit launcher"
 - Workflow triggers only when `apps/engineering-cockpit/**` or its workflow changes.
 - Backend and frontend jobs use `working-directory` explicitly.
 
-- [ ] **Step 1: Inventory inherited workflows**
+- [x] **Step 1: Inventory inherited workflows**
 
 ```bash
 find apps/engineering-cockpit/.github/workflows -maxdepth 1 -type f -print
 ```
 
-- [ ] **Step 2: Create the root workflow**
+- [x] **Step 2: Create the root workflow**
 
 The workflow must include:
 
@@ -440,7 +450,7 @@ on:
 
 Backend steps run `uv sync --frozen`, migration checks, lint, mypy, and tests from `apps/engineering-cockpit`. Frontend steps run `bun install --frozen-lockfile`, lint, typecheck, and build from `apps/engineering-cockpit/frontend`.
 
-- [ ] **Step 3: Validate workflow syntax and local commands**
+- [x] **Step 3: Validate workflow syntax and local commands**
 
 ```bash
 cd apps/engineering-cockpit
@@ -455,11 +465,11 @@ bun run build
 
 Expected: all commands exit `0`.
 
-- [ ] **Step 4: Remove nested workflow copies only after parity review**
+- [x] **Step 4: Remove nested workflow copies only after parity review**
 
 Nested `.github/workflows` do not execute in the parent repository. Preserve non-workflow GitHub instructions and templates.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .github/workflows/engineering-cockpit-ci.yml \
@@ -472,7 +482,23 @@ git commit -m "ci: add engineering cockpit path-scoped checks"
 **Files:**
 - Create: `apps/engineering-cockpit/docs/bootstrap-verification.md`
 
-- [ ] **Step 1: Verify inherited devcontainer**
+**Dependency clarification (2026-07-31):** This application is a nested
+directory in the `techletes-tooling` Git worktree, whereas the inherited
+template devcontainer mounts only the application directory. Consequently the
+container has no usable `.git` metadata and cannot run `pre-commit
+run --all-files`. The exact linked-worktree Git common-directory mount is
+owned by subsystem 05a. Record `uv lock --check` and the host quality baseline
+here, but leave this in-container pre-commit gate blocked until the 05a
+contract is implemented and verified; do not introduce that future runtime
+architecture as an unreviewed Task 6 workaround.
+
+**Architecture clarification (2026-07-31):** The inherited template
+devcontainer is for developing this cockpit application only. It is not the
+runtime for managed projects or Codex sessions. Later subsystem 05a owns
+runtime-derived Git metadata mounts for each managed target project and its
+own devcontainer. Do not implement that target-project runtime behavior here.
+
+- [x] **Step 1: Verify inherited devcontainer**
 
 ```bash
 devcontainer up --workspace-folder apps/engineering-cockpit
@@ -480,16 +506,18 @@ devcontainer up --workspace-folder apps/engineering-cockpit
 
 Expected final JSON includes `"outcome":"success"`, a container ID, and `remoteWorkspaceFolder` `/workspaces/app`.
 
-- [ ] **Step 2: Run backend baseline inside the devcontainer**
+- [x] **Step 2: Run backend baseline inside the devcontainer**
 
 ```bash
 devcontainer exec --workspace-folder apps/engineering-cockpit -- \
-  bash -lc 'cd /workspaces/app && uv lock --check && pre-commit run --all-files'
+  bash -lc 'cd /workspaces/app && uv lock --check'
 ```
 
-Expected: exit `0`.
+Expected: exit `0`. The repository-wide `pre-commit run --all-files` baseline
+is executed from the host checkout in Step 5. Target-project Git metadata
+compatibility inside task devcontainers is verified by subsystem 05a.
 
-- [ ] **Step 3: Run host-mode baseline**
+- [x] **Step 3: Run host-mode baseline**
 
 ```bash
 cd apps/engineering-cockpit
@@ -507,11 +535,11 @@ devcontainer --version
 
 Expected: both HTTP requests succeed and Docker/Dev Container CLI are visible from WSL.
 
-- [ ] **Step 4: Document exact verified versions and deviations**
+- [x] **Step 4: Document exact verified versions and deviations**
 
 Record template commit, Python, uv, Bun, Node, Docker, Dev Container CLI, and Codex versions in `docs/bootstrap-verification.md`. Do not record credentials or complete environment dumps.
 
-- [ ] **Step 5: Run full preflight and commit**
+- [x] **Step 5: Run full preflight and commit**
 
 ```bash
 cd apps/engineering-cockpit

@@ -1,0 +1,55 @@
+<mjml>
+  <mj-head>
+    <mj-font name="Inter" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" />
+    <mj-attributes>
+      <mj-all font-family="Inter, Arial, Helvetica, sans-serif" />
+      <mj-text font-size="15px" line-height="1.6" color="#0F172A" padding="0 0 16px" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#EEF2F6">
+
+    <!-- Brand header -->
+    <mj-section background-color="#ffa500" padding="20px 24px">
+      <mj-column>
+        <mj-text align="center" font-size="20px" font-weight="600" color="#ffffff" padding="0">
+          {{ project_name }}
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Card body -->
+    <mj-section background-color="#ffffff" padding="40px 32px 24px">
+      <mj-column>
+        <mj-text align="center" font-size="22px" font-weight="600" color="#0F172A" padding="0 0 6px">
+          Microsoft Entra Account
+        </mj-text>
+        <mj-text align="center" font-size="15px" color="#6B7280" padding="0 0 24px">
+          Hello {{ username }}
+        </mj-text>
+        <mj-text align="center" color="#0F172A" padding="0 0 16px">
+          We received a password reset request for your account. However, your account is managed through <strong>Microsoft Entra (Azure Active Directory)</strong>, so passwords cannot be changed here.
+        </mj-text>
+        <mj-text align="center" color="#0F172A" padding="0 0 24px">
+          To update your password, please visit the Microsoft account portal or contact your IT administrator.
+        </mj-text>
+        <mj-button align="center" font-size="15px" font-weight="600" background-color="#ffa500" border-radius="12px" color="#ffffff" href="https://myaccount.microsoft.com" inner-padding="14px 32px" padding="0 0 24px">
+          Go to Microsoft Account
+        </mj-button>
+        <mj-divider border-color="#E6EBF0" border-width="1px" padding="0 0 20px" />
+        <mj-text align="center" font-size="13px" color="#6B7280" padding="0">
+          If you didn't request a password reset, you can safely ignore this email.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+    <!-- Footer -->
+    <mj-section background-color="#EEF2F6" padding="20px 24px">
+      <mj-column>
+        <mj-text align="center" font-size="13px" color="#6B7280" padding="0">
+          &copy; {{ project_name }} &mdash; You received this email because a password reset was requested for your account.
+        </mj-text>
+      </mj-column>
+    </mj-section>
+
+  </mj-body>
+</mjml>

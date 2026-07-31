@@ -1,0 +1,40 @@
+source:
+  repository: TECHLETES/python_template
+  branch: main
+
+target:
+  branch: main
+  sync_branch: chore/python-template-sync
+
+# Generic Python tooling inherited by full-stack-template.
+#
+# Full-stack-specific application code, frontend configuration, compose files,
+# deployment behavior and documentation remain owned by full-stack-template.
+paths:
+  # Shared GitHub configuration.
+  - .github/workflows/staging-main-check.yml
+  - .github/workflows/reusable-reconcile-template-sync-branch.yml
+  - .github/workflows/labeler.yml
+  - .github/ISSUE_TEMPLATE/**
+  - .github/dependabot.yml
+  - .github/pull_request_template.md
+
+  # Do not inherit python_template's template-sync.yml. full-stack-template
+  # has its own downstream caller with different source settings.
+
+  # Shared development environment components.
+  - .devcontainer/post-create.sh
+  - .devcontainer/post-attach.sh
+  - .devcontainer/initialize.sh
+
+  # Generic Python tooling.
+  - .pre-commit-config.yaml
+  - .python-version
+  - .editorconfig
+  - .gitattributes
+  - pyproject.toml
+
+  # Shared generic helper scripts.
+  - scripts/hooks/**
+  - scripts/adopt_template.py
+  - docs/*.md

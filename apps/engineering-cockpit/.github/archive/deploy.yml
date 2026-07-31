@@ -1,0 +1,298 @@
+name: Deploy
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: "Skip tests and go straight to build"
+        required: false
+        default: false
+        type: boolean
+      skip_build:
+        description: "Skip the build/push step and go straight to deploy"
+        required: false
+        default: false
+        type: boolean
+  push:
+    branches:
+      - main
+    paths:
+      - "!**/*.md"
+      - "!docs/**"
+      - "!img/**"
+      - "!tests/**"
+      - "!scripts/**"
+      - "!.vscode/**"
+      - "!.github/**"
+      - "!LICENSE"
+      - "!.gitignore"
+      - "!.secret.baseline"
+      - "!.gitatributes"
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test-backend:
+    uses: ./.github/workflows/test-backend.yml
+    if: ${{ !inputs.skip_tests }}
+    secrets: inherit # pragma: allowlist secret
+
+  test-docker-compose:
+    uses: ./.github/workflows/test-docker-compose.yml
+    if: ${{ !inputs.skip_tests }}
+    secrets: inherit # pragma: allowlist secret
+
+  test-database:
+    uses: ./.github/workflows/test-database.yml
+    if: ${{ !inputs.skip_tests }}
+    secrets: inherit # pragma: allowlist secret
+
+  test-gate:
+    name: Test gate
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs:
+      - test-backend
+      - test-docker-compose
+      - test-database
+    outputs:
+      passed: ${{ steps.eval.outputs.passed }}
+      reason: ${{ steps.eval.outputs.reason }}
+    steps:
+      - id: eval
+        run: |
+          if [[ "${{ inputs.skip_tests }}" == "true" ]]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "reason=skip_tests" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if \
+            [[ "${{ needs.test-backend.result }}" == "success" ]] && \
+            [[ "${{ needs.test-docker-compose.result }}" == "success" ]] && \
+            [[ "${{ needs.test-database.result }}" == "success" ]]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "reason=tests_passed" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=tests_not_success" >> "$GITHUB_OUTPUT"
+          fi
+
+  build-and-push:
+    name: Build & push Docker image to GHCR
+    runs-on: ubuntu-latest
+    needs: [test-gate]
+    if: >-
+      ${{ always()
+          && needs.test-gate.result == 'success'
+          && needs.test-gate.outputs.passed == 'true'
+          && !(inputs.skip_build == true || inputs.skip_build == 'true')
+      }}
+    steps:
+      - uses: actions/checkout@v6.0.3
+      - uses: docker/setup-buildx-action@v4.1.0
+      - name: Debug gating
+        run: |
+          echo "test-gate.result=${{ needs.test-gate.result }}"
+          echo "test-gate.outputs.passed=${{ needs.test-gate.outputs.passed }}"
+          echo "test-gate.outputs.reason=${{ needs.test-gate.outputs.reason }}"
+          echo "inputs.skip_build=${{ inputs.skip_build }}"
+          echo "inputs.skip_tests=${{ inputs.skip_tests }}"
+      - name: Log in to GHCR
+        uses: docker/login-action@v4.2.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for app image
+        id: meta
+        uses: docker/metadata-action@v6.1.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=main-,format=short
+            type=raw,value=latest
+
+      - name: Build & push app image
+        uses: docker/build-push-action@v7.2.0
+        with:
+          context: .
+          push: true
+          build-args: |
+            COMMIT_SHA=${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-push-gate:
+    name: Build and push gate
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    needs:
+      - test-gate
+      - build-and-push
+    outputs:
+      passed: ${{ steps.eval.outputs.passed }}
+      reason: ${{ steps.eval.outputs.reason }}
+    steps:
+      - name: Debug steps
+        run: |
+          echo "test-gate.outputs.passed: ${{ needs.test-gate.outputs.passed }}"
+          echo "Skip build: ${{ inputs.skip_build }}"
+      - id: eval
+        run: |
+          if [[ "${{ needs.test-gate.outputs.passed }}" != "true" ]]; then
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=test_gate_failed" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ inputs.skip_build }}" == "true" ]]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "reason=skip_build" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "${{ needs.build-and-push.result }}" == "success" ]]; then
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+            echo "reason=build_succeeded" >> "$GITHUB_OUTPUT"
+          else
+            echo "passed=false" >> "$GITHUB_OUTPUT"
+            echo "reason=build_not_success" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    name: Deploy to production
+    needs: [build-push-gate]
+    runs-on: ubuntu-latest
+    if: >-
+      ${{ always()
+          && needs.build-push-gate.result == 'success'
+          && needs.build-push-gate.outputs.passed == 'true'
+          && github.ref == 'refs/heads/main'
+          && github.repository_owner == 'techletes'
+      }}
+    environment:
+      name: prod
+      url: https://example.techletes.ai
+    steps:
+      - name: Wait for SSH connectivity
+        timeout-minutes: 5
+        run: |
+          echo "Checking SSH connectivity to VPS..."
+          for i in {1..10}; do
+            if nc -zw5 "${{ secrets.VPS_DEPLOY_HOST }}" 22 2>/dev/null; then
+              echo "✅ SSH port reachable on attempt $i"
+              exit 0
+            fi
+            echo "Attempt $i/10: port 22 not reachable, retrying in 15s..."
+            sleep 15
+          done
+          echo "❌ Unable to reach SSH port after 10 attempts"
+          exit 1
+
+      - name: Deploy to VPS
+        timeout-minutes: 10
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_DEPLOY_HOST }}
+          username: ${{ secrets.VPS_DEPLOY_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 15m
+          script: |
+            set -euo pipefail
+            umask 077
+
+            cd ~/applicatie
+            git fetch --all --prune
+            git checkout -f main
+            git pull --ff-only origin main
+
+            docker network create applicatie-proxy >/dev/null 2>&1 || true
+
+            sed -i "s/^IMAGE_TAG=.*/IMAGE_TAG=latest/" .env
+
+            set -a
+            . .env
+            set +a
+
+            docker compose pull db redis adminer caddy backend -q
+            docker compose up -d --force-recreate --remove-orphans
+
+            docker image prune -f
+
+      - name: Verify deployment (remote only)
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_DEPLOY_HOST }}
+          username: ${{ secrets.VPS_DEPLOY_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          port: 22
+          timeout: 60s
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            echo "Waiting for services to start (remote)..."
+            sleep 20
+            MAX_ATTEMPTS=15
+            SLEEP=5
+            attempt=1
+            status=""
+            while [ $attempt -le $MAX_ATTEMPTS ]; do
+              echo "Attempt $attempt/$MAX_ATTEMPTS: checking health on VPS..."
+              status=$(curl -sS --resolve ${{ secrets.DOMAIN }}:443:127.0.0.1 -H "Host: ${{ secrets.DOMAIN }}" https://${{ secrets.DOMAIN }}/api/v1/utils/health-check/ --max-time 10 2>/dev/null || true)
+              if [ "$status" = "true" ]; then
+                echo "✅ Deployment healthy on attempt $attempt!"
+                exit 0
+              fi
+              echo "Not healthy yet (status: ${status:-unknown}), sleeping ${SLEEP}s..."
+              sleep $SLEEP
+              attempt=$((attempt+1))
+            done
+            echo "❌ Deployment may have failed after ${MAX_ATTEMPTS} attempts (Status: ${status:-unknown})"
+            exit 1
+
+      - name: Save successful tag and commit
+        if: success()
+        uses: appleboy/ssh-action@v1.2.5
+        with:
+          host: ${{ secrets.VPS_DEPLOY_HOST }}
+          username: ${{ secrets.VPS_DEPLOY_USER }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/applicatie
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+            cat > .last_successful_tag <<EOF
+            IMAGE_TAG=main-$SHORT_SHA
+            COMMIT_SHA=${{ github.sha }}
+            EOF
+
+  prune-ghcr:
+    name: Prune old GHCR images
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    if: ${{ always() && (needs.deploy.result == 'success' || needs.deploy.result == 'skipped') }}
+    steps:
+      - name: Clean up old GHCR images
+        uses: actions/delete-package-versions@v5.0.0
+        with:
+          owner: ${{ github.repository_owner }}
+          package-name: ${{ github.event.repository.name }}
+          package-type: container
+          min-versions-to-keep: 3
+          token: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,122 @@
+name: Engineering Cockpit CI
+
+on:
+  pull_request:
+    paths:
+      - "apps/engineering-cockpit/**"
+      - ".github/workflows/engineering-cockpit-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "apps/engineering-cockpit/**"
+      - ".github/workflows/engineering-cockpit-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 10
+
+    env:
+      PROJECT_NAME: "Engineering Cockpit"
+      SECRET_KEY: "test-secret-key-for-ci-only" # pragma: allowlist secret
+      FRONTEND_HOST: "http://localhost:5173"
+      POSTGRES_SERVER: "localhost"
+      POSTGRES_DB: "app"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "testpassword"
+      REDIS_URL: "redis://localhost:6379"
+      FIRST_SUPERUSER: "admin@example.com"
+      FIRST_SUPERUSER_PASSWORD: "testpassword" # pragma: allowlist secret
+      EMAILS_FROM_EMAIL: "test@example.com"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.9.26"
+          enable-cache: true
+          cache-dependency-glob: apps/engineering-cockpit/uv.lock
+
+      - name: Install dependencies
+        run: uv sync --frozen
+        working-directory: apps/engineering-cockpit
+
+      - name: Check migrations
+        run: uv run alembic upgrade head && uv run alembic current
+        working-directory: apps/engineering-cockpit/backend
+
+      - name: Lint
+        run: uv run ruff check backend
+        working-directory: apps/engineering-cockpit
+
+      - name: Type-check
+        run: uv run mypy
+        working-directory: apps/engineering-cockpit
+
+      - name: Test
+        run: uv run pytest
+        working-directory: apps/engineering-cockpit
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.10"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+        working-directory: apps/engineering-cockpit/frontend
+
+      - name: Lint
+        run: bun run lint
+        working-directory: apps/engineering-cockpit/frontend
+
+      - name: Type-check
+        run: bun run typecheck
+        working-directory: apps/engineering-cockpit/frontend
+
+      - name: Build
+        run: bun run build
+        working-directory: apps/engineering-cockpit/frontend

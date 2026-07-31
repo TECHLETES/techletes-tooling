@@ -1,0 +1,236 @@
+# name: Playwright Tests (Docker)
+
+# on:
+#   push:
+#     branches:
+#       - main
+#   pull_request:
+#     types:
+#       - opened
+#       - synchronize
+#   workflow_dispatch:
+#     inputs:
+#       debug_enabled:
+#         description: 'Run the build with tmate debugging enabled'
+#         required: false
+#         default: 'false'
+
+# jobs:
+#   changes:
+#     runs-on: ubuntu-latest
+#     outputs:
+#       changed: ${{ steps.filter.outputs.changed }}
+#     steps:
+#       - uses: actions/checkout@v6
+#       - uses: dorny/paths-filter@v3
+#         id: filter
+#         with:
+#           filters: |
+#             changed:
+#               - backend/**
+#               - frontend/**
+#               - .env
+#               - Dockerfile
+#               - docker-compose.yml
+#               - .github/workflows/playwright-docker.yml
+
+#   build-docker-image:
+#     needs:
+#       - changes
+#     if: ${{ needs.changes.outputs.changed == 'true' }}
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v6
+
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
+
+#       - name: Build Docker image
+#         uses: docker/build-push-action@v5
+#         with:
+#           context: .
+#           push: false
+#           outputs: type=docker,dest=/tmp/full-stack-template.tar
+#           tags: full-stack-template:test
+#           cache-from: type=gha
+#           cache-to: type=gha,mode=min
+#           build-args: |
+#             VITE_API_URL=http://localhost:8000/api/v1
+
+#       - name: Upload Docker image artifact
+#         uses: actions/upload-artifact@v6
+#         with:
+#           name: docker-image
+#           path: /tmp/full-stack-template.tar
+#           retention-days: 1
+
+#   test-playwright-docker:
+#     needs:
+#       - changes
+#       - build-docker-image
+#     if: ${{ needs.changes.outputs.changed == 'true' }}
+#     timeout-minutes: 60
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         shardIndex: [1, 2, 3, 4]
+#         shardTotal: [4]
+#       fail-fast: false
+
+#     services:
+#       postgres:
+#         image: postgres:18-alpine
+#         env:
+#           POSTGRES_USER: postgres
+#           POSTGRES_PASSWORD: postgres  # pragma: allowlist secret
+#           POSTGRES_DB: app
+#         options: >-
+#           --health-cmd pg_isready
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 5432:5432
+
+#       redis:
+#         image: redis:8-alpine
+#         options: >-
+#           --health-cmd "redis-cli ping"
+#           --health-interval 10s
+#           --health-timeout 5s
+#           --health-retries 5
+#         ports:
+#           - 6379:6379
+
+#       mailpit:
+#         image: axllent/mailpit
+#         ports:
+#           - 1025:1025
+#           - 8025:8025
+
+#     steps:
+#       - uses: actions/checkout@v6
+
+#       - name: Setup tmate session
+#         uses: mxschmitt/action-tmate@v3
+#         if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.debug_enabled == 'true' }}
+#         with:
+#           limit-access-to-actor: true
+
+#       - name: Download Docker image artifact
+#         uses: actions/download-artifact@v7
+#         with:
+#           name: docker-image
+#           path: /tmp
+
+#       - name: Load Docker image
+#         run: docker load -i /tmp/full-stack-template.tar
+
+#       - name: Create .env file for backend
+#         run: |
+#           cp .env.template .env
+#           # Override for CI (host networking - postgres/redis exposed on localhost)
+#           sed -i 's/^SECRET_KEY=.*/SECRET_KEY=test-secret-key-for-testing-only-not-secure/' .env  # pragma: allowlist secret
+#           sed -i 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=postgres/' .env # pragma: allowlist secret
+#           sed -i 's/^FIRST_SUPERUSER=.*/FIRST_SUPERUSER=admin@example.com/' .env
+#           sed -i 's/^FIRST_SUPERUSER_PASSWORD=.*/FIRST_SUPERUSER_PASSWORD=password123/' .env # pragma: allowlist secret
+#           sed -i 's/^SMTP_HOST=.*/SMTP_HOST=127.0.0.1/' .env
+#           sed -i 's/^SMTP_PORT=.*/SMTP_PORT=1025/' .env
+#           sed -i 's/^EMAILS_FROM_EMAIL=.*/EMAILS_FROM_EMAIL=noreply@example.com/' .env
+
+#       - name: Wait for Mailpit
+#         run: |
+#           timeout 30 bash -c 'until curl -f http://127.0.0.1:8025/api/v1/messages 2>/dev/null; do sleep 1; done'
+
+#       - name: Start backend from Docker image
+#         run: |
+#           docker run -d \
+#             --name backend \
+#             --network host \
+#             --env-file .env \
+#             -e WORKERS=2 \
+#             full-stack-template:test
+
+#           # Wait for backend to be ready (migrations + seed data can take time)
+#           timeout 120 bash -c 'until curl -f http://localhost:8000/api/v1/utils/health-check/ 2>/dev/null; do sleep 2; done'
+
+#       - name: Dump backend logs on failure
+#         if: failure()
+#         run: docker logs backend || true
+
+#       - name: Setup Bun for Playwright tests
+#         uses: oven-sh/setup-bun@v2
+
+#       - name: Install frontend dependencies
+#         run: bun ci
+#         working-directory: frontend
+
+#       - name: Install Playwright browsers
+#         run: bunx playwright install --with-deps
+#         working-directory: frontend
+
+#       - name: Run Playwright tests
+#         run: bunx playwright test --fail-on-flaky-tests --trace=retain-on-failure --shard=${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+#         working-directory: frontend
+#         env:
+#           MAILCATCHER_HOST: http://127.0.0.1:8025
+#           PLAYWRIGHT_TEST_BASE_URL: http://localhost:8000
+
+#       - name: Upload blob report
+#         if: ${{ !cancelled() }}
+#         uses: actions/upload-artifact@v6
+#         with:
+#           name: blob-report-${{ matrix.shardIndex }}
+#           path: frontend/blob-report
+#           include-hidden-files: true
+#           retention-days: 1
+
+#       - name: Cleanup backend container
+#         if: always()
+#         run: docker stop backend || true && docker rm backend || true
+
+#   merge-playwright-reports:
+#     needs:
+#       - test-playwright-docker
+#       - changes
+#     if: ${{ !cancelled() && needs.changes.outputs.changed == 'true' }}
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v6
+#       - uses: oven-sh/setup-bun@v2
+
+#       - name: Install frontend dependencies
+#         run: bun ci
+#         working-directory: frontend
+
+#       - name: Download blob reports
+#         uses: actions/download-artifact@v7
+#         with:
+#           path: frontend/all-blob-reports
+#           pattern: blob-report-*
+#           merge-multiple: true
+
+#       - name: Merge reports
+#         run: bunx playwright merge-reports --reporter html ./all-blob-reports
+#         working-directory: frontend
+
+#       - name: Upload HTML report
+#         uses: actions/upload-artifact@v6
+#         with:
+#           name: html-report--attempt-${{ github.run_attempt }}
+#           path: frontend/playwright-report
+#           retention-days: 30
+#           include-hidden-files: true
+
+#   alls-green-playwright:
+#     if: always()
+#     needs:
+#       - build-docker-image
+#       - test-playwright-docker
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Decide whether the needed jobs succeeded or failed
+#         uses: re-actors/alls-green@release/v1
+#         with:
+#           jobs: ${{ toJSON(needs) }}
+#           allowed-skips: build-docker-image,test-playwright-docker

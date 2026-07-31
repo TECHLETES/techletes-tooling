@@ -2,16 +2,16 @@
 schema_version: 1
 project: techletes-engineering-cockpit
 planning_issue: TECHLETES/techletes-tooling#7
-updated_at: 2026-07-31T16:35:00+02:00
+updated_at: 2026-07-31T23:10:00+02:00
 updated_by: controller
 current_phase: "Phase 0 - bootstrap"
 current_subsystem: "01"
 current_plan: "superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md"
-current_status: ready_to_start
-working_branch: null
-working_worktree: null
-last_verified_commit: null
-next_action: "Create feature/cockpit-01-bootstrap in ~/worktrees/techletes-tooling/cockpit-01-bootstrap, then execute the active child plan with confirmed Subagent-Driven Development."
+current_status: complete
+working_branch: feature/cockpit-01-bootstrap
+working_worktree: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
+last_verified_commit: 5a829aa
+next_action: "Hand off feature/cockpit-01-bootstrap for local integration and push by the user; do not start subsystem 02 in this session."
 blockers: []
 ---
 
@@ -27,13 +27,13 @@ Git history, the current child implementation plan, `.superpowers/sdd/progress.m
 | --- | --- |
 | Phase | Phase 0 — bootstrap |
 | Active subsystem | 01 — Template bootstrap and WSL runtime topology |
-| Status | Ready to start |
-| Branch | Not created yet |
-| Worktree | Not created yet |
-| Last verified commit | Planning package on `main` |
-| Last verification | Planning documents, portable handoff files, and Sol/Terra controller/Luna Medium subagent workflow created |
-| Immediate next action | Create `feature/cockpit-01-bootstrap` in `~/worktrees/techletes-tooling/cockpit-01-bootstrap`, start Sol or Terra, and use the kickoff prompt in `CODEX_RUNBOOK.md` |
-| Blockers | None known |
+| Status | Complete |
+| Branch | `feature/cockpit-01-bootstrap` |
+| Worktree | `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap` |
+| Last verified commit | `b55e94f` |
+| Last verification | Host baseline, devcontainer lock baseline, focused closeout regressions, and full quality checks — PASS |
+| Immediate next action | Hand off the verified branch for local integration and push by the user |
+| Blockers | None for subsystem 01; target-project Git metadata mounting remains subsystem 05a scope |
 
 ## Subsystem progress
 
@@ -41,7 +41,7 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 | ID | Subsystem | Status | Branch/PR | Evidence or next gate |
 | --- | --- | --- | --- | --- |
-| 01 | Template bootstrap and WSL runtime topology | not_started | — | Bootstrap from current full-stack template and pass baseline exit criteria |
+| 01 | Template bootstrap and WSL runtime topology | complete | `feature/cockpit-01-bootstrap` | Tasks 1–6 and closeout review evidence committed through `b55e94f` |
 | 02 | Repository registry, configuration, and diagnostics | not_started | — | Requires 01 |
 | 03 | Task domain, PostgreSQL persistence, state, and locking | not_started | — | Requires 01–02 |
 | 04 | Git worktrees, branches, synchronization, overlap, and removal | not_started | — | Requires 03 |
@@ -70,7 +70,9 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 ### Current unchecked task
 
-Start at the first unchecked task in the subsystem 01 implementation plan. The canonical subsystem branch is `feature/cockpit-01-bootstrap`; do not infer completion from the planning commits.
+There is no unchecked Task 6 step remaining in the active subsystem plan. The
+canonical subsystem branch is `feature/cockpit-01-bootstrap`; do not infer
+completion from planning commits alone.
 
 The Sol/Terra controller must initialize the task rows in `.superpowers/sdd/progress.md`, then dispatch fresh Luna Medium implementers and reviewers according to `DEVELOPMENT_ORCHESTRATION.md`.
 
@@ -97,6 +99,9 @@ Before this state advances beyond subsystem 01, record:
 - Every exploration, implementation, review, fix, and final-review subagent uses `gpt-5.6-luna` with medium reasoning.
 - The controller owns planning, integration, review adjudication, state files, and exit-gate decisions.
 - This Sol/Terra/Luna policy is only for implementing the repository. It is not Engineering Cockpit product functionality.
+- Evidence may justify resequencing the roadmap: move the smallest safe
+  prerequisite earlier, update the affected spec/plan and durable evidence,
+  and preserve the later subsystem's remaining scope and all requirements.
 
 ### Product and architecture
 
@@ -113,9 +118,21 @@ None known. Add only blockers with concrete evidence, owner, and unblock conditi
 
 ## Working-tree handoff
 
-No implementation worktree exists yet.
+Controller model: Sol/Terra
+Active plan consent: confirmed
+Branch: feature/cockpit-01-bootstrap
+Worktree path: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
+HEAD: 5a829aa
+Working tree: clean
+Uncommitted files: none
+Current plan task: Task 6 — Complete baseline verification (complete)
+Active subagent role/task: None
+Last reviewed task: Closeout fixes — controller verification passed
+Last command run: focused launcher and CI-safe post-attach regression suite
+Last command result: PASS
+Next exact command/action: Hand off the clean branch without starting subsystem 02.
 
-When implementation begins, replace this section with:
+For future checkpoints, replace this section with current values in this form:
 
 ```text
 Controller model: Sol|Terra

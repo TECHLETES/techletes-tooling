@@ -1,0 +1,55 @@
+source:
+  repository: TECHLETES/full-stack-template
+  branch: main
+
+target:
+  branch: staging # Set to the current repo's integration branch
+  sync_branch: chore/template-sync
+
+paths:
+  # Template-sync caller and shared GitHub configuration.
+  - .github/workflows/template-sync.yml
+  - .github/workflows/reconcile-template-sync-branch.yml
+  - .github/workflows/staging-main-check.yml
+  - .github/workflows/labeler.yml
+  - .github/workflows/ci.yml
+  - .github/workflows/test-devcontainer.yml
+  - .github/workflows/test-database.yml
+  - .github/workflows/test-pre-commit.yml
+  - .github/workflows/test-docker-compose.yml
+  - .github/workflows/test-backend.yml
+  - .github/ISSUE_TEMPLATE/**
+  - .github/dependabot.yml
+  - .github/pull_request_template.md
+
+  # Development environment.
+  - .devcontainer/**
+
+  # Shared repository tooling.
+  - .pre-commit-config.yaml
+  - .python-version
+  - .editorconfig
+  - .gitattributes
+  - .gitignore
+
+  # Python baseline.
+  - pyproject.toml
+
+  # Frontend baseline.
+  - frontend/package.json
+  - frontend/biome.json
+
+  # Runtime and deployment baseline.
+  - docker-compose.yml
+  - Dockerfile
+  - Caddyfile
+  - .env.template
+
+  # Shared automation and engineering instructions.
+  - scripts/**
+  - AGENTS.md
+
+  # Explicit centrally governed documentation.
+  - docs/DEVELOPMENT.md
+  - docs/CONTRIBUTING.md
+  - docs/SECURITY.md

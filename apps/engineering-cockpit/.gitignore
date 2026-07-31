@@ -1,0 +1,130 @@
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+!frontend/src/lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+installdist/
+pip-wheel-metadata/
+__pypackages__/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.cache
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+nosetests.xml
+coverage/*
+
+# pyenv
+.python-version
+
+# PEP 582; used by e.g. pythonz, pypa/pipx
+__pypackages__/
+
+# Environments
+.env
+.env.*
+.venv/
+venv/
+
+# mypy
+.mypy_cache/
+
+# ruff
+.ruff_cache/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# JetBrains
+*.iml
+.idea/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+.
+/.pnp/
+.pnp.js
+
+# Frontend build
+frontend/dist/
+frontend/build/
+
+# Playwright
+/playwright-report/
+/test-results/
+playwright/.cache/
+
+# Logs
+*.log
+logs/
+*.out
+
+# OS files
+Icon
+ehthumbs.db
+Desktop.ini
+
+# Docker
+docker-compose.override.yml
+docker-compose.local.yml
+**/docker-compose.override.yml
+**/docker-compose.local.yml
+*.tar
+
+# Temporary files
+*.swp
+*.swo
+*~
+
+# Coverage and reports
+htmlcov/
+coverage.xml
+
+# Distribution / packaging
+dist/
+*.egg-info/
+
+# Misc
+*.bak
+*.tmp
+
+# Ignore egg-info from editable installs
+*.egg-info/
+
+.tanstack/
+.coverage.*
+
+.devcontainer/devcontainer-lock.json

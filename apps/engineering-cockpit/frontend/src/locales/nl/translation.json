@@ -1,0 +1,489 @@
+{
+  "admin": {
+    "roles": {
+      "delete": {
+        "deleting": "Bezig met verwijderen...",
+        "description": "Weet je zeker dat je de rol \"{{name}}\" wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+        "title": "Rol verwijderen"
+      },
+      "form": {
+        "descriptionPlaceholder": "Voer een rolbeschrijving in (optioneel)",
+        "entraEnabledCreateDescription": "Nadat je deze rol hebt aangemaakt, kun je deze exporteren naar Entra via de manifest-export op de rollenpagina en daarna de Entra-rol-ID toevoegen wanneer je de rol bewerkt.",
+        "entraEnabledEditDescription": "Werk het veld Entra-rol-ID bij nadat je deze rol hebt gesynchroniseerd met de Entra-applicatie. Dit helpt bij het volgen welke applicatierollen zijn gesynchroniseerd.",
+        "entraEnabledTitle": "Microsoft Entra is ingeschakeld",
+        "entraRoleIdHelp": "Nadat je deze rol hebt gesynchroniseerd met Entra, kopieer je de app-rol-ID uit het manifest en plak je die hier om de synchronisatie te volgen.",
+        "entraRoleIdPlaceholder": "Plak de Entra-app-rol-ID na synchronisatie",
+        "roleNamePlaceholder": "Voer een rolnaam in",
+        "superAdminDescription": "Je kunt alleen de Entra-rol-ID voor de Super admin-rol bijwerken.",
+        "superAdminEntraHelp": "Nadat je de Super admin-rol hebt gesynchroniseerd met Entra, kopieer je de app-rol-ID uit het manifest en plak je die hier om de synchronisatie te volgen.",
+        "superAdminEntraPlaceholder": "Plak de Entra-app-rol-ID voor Super admin",
+        "superAdminLocked": "Dit is de Super admin-rol en deze kan niet worden bewerkt of verwijderd.",
+        "superAdminTitle": "Super admin-rol"
+      },
+      "manifest": {
+        "alertDescription": "Bestaande Entra-app-rol-ID's worden hergebruikt wanneer beschikbaar. Ontbrekende ID's vallen terug op deterministische waarden zodat herhaalde exports stabiel blijven. Bestaande rollen worden in de export als uitgeschakeld gemarkeerd om updates toe te staan - schakel ze na het plakken handmatig opnieuw in in Entra.",
+        "alertTitle": "Kopieer-plak export",
+        "copied": "Gekopieerd",
+        "copyJson": "JSON kopiëren",
+        "description": "Kopieer deze JSON naar het Entra-applicatiemanifest onder appRoles.",
+        "generating": "Entra-manifestexport genereren...",
+        "roleCount_one": "{{count}} rol opgenomen in deze export",
+        "roleCount_other": "{{count}} rollen opgenomen in deze export",
+        "title": "Entra-app-rollenmanifest"
+      },
+      "page": {
+        "allPermissions": "Alle rechten",
+        "createDialogDescription": "Maak een nieuwe rol aan met specifieke rechten",
+        "createDialogTitle": "Nieuwe rol aanmaken",
+        "createFirst": "Eerste rol aanmaken",
+        "editDialogDescription": "Werk roldetails en rechten bij",
+        "editDialogTitle": "Rol bewerken",
+        "empty": "Nog geen rollen aangemaakt",
+        "entraAlertDescription": "Rollen die in deze applicatie zijn aangemaakt kunnen worden gesynchroniseerd met Entra. Exporteer het manifest hieronder om rollen naar de Entra-app te kopiëren. Werk na succesvolle updates in Entra elke rol bij met de Entra-rol-ID om de synchronisatie te volgen.",
+        "entraAlertTitle": "Microsoft Entra is ingeschakeld",
+        "exportManifest": "Entra-manifest exporteren",
+        "loading": "Rollen laden...",
+        "metaTitle": "Rollen",
+        "notSynced": "Niet gesynchroniseerd",
+        "permissionsCount_one": "{{count}} recht",
+        "permissionsCount_other": "{{count}} rechten",
+        "subtitle": "Maak rollen aan en beheer ze met specifieke rechten",
+        "superAdminDialogDescription": "Werk de Entra-rol-ID voor de Super admin-rol bij",
+        "systemBadge": "Systeem",
+        "title": "Rollenbeheer"
+      },
+      "permissions": {
+        "description": "Alle rechten die aan deze rol zijn toegewezen",
+        "empty": "Geen rechten toegewezen",
+        "resource": "Resource: {{resource}}",
+        "superAdminDescription": "Super admin heeft onbeperkte toegang tot alle functies en rechten",
+        "title": "Rechten - {{name}}"
+      }
+    },
+    "userRoles": {
+      "addRole": "Rol toevoegen",
+      "allRolesAssigned": "Alle rollen zijn aan deze gebruiker toegewezen.",
+      "assignNewRole": "Nieuwe rol toewijzen",
+      "currentRoles": "Huidige rollen",
+      "description": "Rollen toewijzen of verwijderen voor {{email}}",
+      "entraDescription": "Nieuwe applicatierollen moeten ook in de Entra-applicatie bestaan. Maak ze aan via de rollenpagina en gebruik daar indien nodig de Entra-manifestexport.",
+      "entraTitle": "Microsoft Entra-rolsynchronisatie",
+      "loadingRoles": "Rollen laden...",
+      "noRoles": "Geen rollen toegewezen",
+      "removeRole": "Rol {{name}} verwijderen",
+      "selectRole": "Selecteer een rol...",
+      "title": "Gebruikersrollen beheren",
+      "trigger": "Rollen beheren",
+      "userInformation": "Gebruikersinformatie"
+    },
+    "users": {
+      "add": {
+        "description": "Vul het onderstaande formulier in om een nieuwe gebruiker aan het systeem toe te voegen.",
+        "isActive": "Is actief?",
+        "isSuperuser": "Is superuser?",
+        "setPassword": "Wachtwoord instellen",
+        "title": "Gebruiker toevoegen",
+        "trigger": "Gebruiker toevoegen"
+      },
+      "columns": {
+        "active": "Actief",
+        "email": "E-mail",
+        "fullName": "Volledige naam",
+        "inactive": "Inactief",
+        "role": "Rol",
+        "status": "Status",
+        "superuser": "Superuser",
+        "user": "Gebruiker",
+        "you": "Jij"
+      },
+      "delete": {
+        "description": "Alle items die aan deze gebruiker zijn gekoppeld worden ook permanent verwijderd. Weet je het zeker? Deze actie kan niet ongedaan worden gemaakt.",
+        "title": "Gebruiker verwijderen",
+        "trigger": "Gebruiker verwijderen"
+      },
+      "edit": {
+        "description": "Werk hieronder de gebruikersgegevens bij.",
+        "title": "Gebruiker bewerken",
+        "trigger": "Gebruiker bewerken"
+      },
+      "page": {
+        "metaTitle": "Gebruikers",
+        "sendingNotification": "Verzenden...",
+        "sendNotification": "Testmelding verzenden",
+        "subtitle": "Beheer gebruikersaccounts en rechten",
+        "testNotificationError": "Verzenden van testmelding mislukt",
+        "title": "Gebruikers"
+      },
+      "stats": {
+        "active": "Actieve gebruikers",
+        "superusers": "Superusers",
+        "total": "Totaal gebruikers"
+      }
+    }
+  },
+  "appearance": {
+    "dark": "Donker",
+    "light": "Licht",
+    "system": "Systeem",
+    "title": "Weergave",
+    "toggleTheme": "Thema wisselen"
+  },
+  "auth": {
+    "githubCallback": {
+      "errors": {
+        "generic": "GitHub-login kon niet worden voltooid",
+        "noAccessToken": "Geen toegangstoken ontvangen van de server",
+        "noCode": "Geen autorisatiecode ontvangen van GitHub",
+        "stateMismatch": "Statusparameter komt niet overeen - mogelijke CSRF-aanval"
+      },
+      "processing": "GitHub-authenticatie voltooien...",
+      "success": "Succesvol ingelogd met GitHub"
+    },
+    "login": {
+      "forgotPassword": "Wachtwoord vergeten?",
+      "metaTitle": "Inloggen",
+      "noAccount": "Heb je nog geen account?",
+      "orContinueWith": "Of ga verder met",
+      "signUp": "Registreren",
+      "submit": "Inloggen",
+      "subtitle": "Voer je gegevens in om door te gaan",
+      "title": "Log in op je account"
+    },
+    "recoverPassword": {
+      "logIn": "Inloggen",
+      "metaTitle": "Wachtwoord herstellen",
+      "rememberPassword": "Weet je je wachtwoord weer?",
+      "subtitle": "Voer je e-mailadres in om je wachtwoord opnieuw in te stellen",
+      "success": "E-mail voor wachtwoordherstel is succesvol verzonden",
+      "title": "Wachtwoord herstellen"
+    },
+    "resetPassword": {
+      "metaTitle": "Wachtwoord resetten",
+      "submit": "Wachtwoord resetten",
+      "subtitle": "Voer hieronder je nieuwe wachtwoord in",
+      "success": "Wachtwoord succesvol bijgewerkt",
+      "title": "Wachtwoord resetten"
+    },
+    "signup": {
+      "backToLogin": "Terug naar inloggen",
+      "haveAccount": "Heb je al een account?",
+      "logIn": "Inloggen",
+      "metaTitle": "Registreren",
+      "submit": "Registreren",
+      "subtitle": "Registreer om te beginnen",
+      "title": "Maak een account aan",
+      "unavailableDescription": "Gebruikersregistratie is momenteel uitgeschakeld. Neem contact op met de beheerder als je een account nodig hebt.",
+      "unavailableTitle": "Registreren niet beschikbaar"
+    },
+    "social": {
+      "github": "Inloggen met GitHub",
+      "google": "Inloggen met Google",
+      "googleError": "Inloggen met Google is mislukt",
+      "microsoft": "Inloggen met Microsoft"
+    }
+  },
+  "common": {
+    "actions": {
+      "cancel": "Annuleren",
+      "close": "Sluiten",
+      "continue": "Doorgaan",
+      "create": "Aanmaken",
+      "delete": "Verwijderen",
+      "done": "Gereed",
+      "edit": "Bewerken",
+      "hidePassword": "Wachtwoord verbergen",
+      "save": "Opslaan",
+      "showPassword": "Wachtwoord tonen",
+      "update": "Bijwerken"
+    },
+    "columns": {
+      "actions": "Acties"
+    },
+    "fields": {
+      "confirmPassword": "Bevestig wachtwoord",
+      "created": "Aangemaakt",
+      "currentPassword": "Huidig wachtwoord",
+      "description": "Beschrijving",
+      "email": "E-mail",
+      "ended": "Beëindigd",
+      "entraRoleId": "Entra-rol-ID",
+      "fullName": "Volledige naam",
+      "jobId": "Taak-ID",
+      "name": "Naam",
+      "newPassword": "Nieuw wachtwoord",
+      "password": "Wachtwoord",
+      "permissions": "Rechten",
+      "queue": "Wachtrij",
+      "roleName": "Rolnaam",
+      "started": "Gestart",
+      "status": "Status",
+      "taskType": "Taaktype",
+      "title": "Titel"
+    },
+    "placeholders": {
+      "confirmPassword": "Bevestig wachtwoord",
+      "description": "Beschrijving",
+      "email": "user@example.com",
+      "fullName": "Gebruiker",
+      "newPassword": "Nieuw wachtwoord",
+      "password": "Wachtwoord",
+      "title": "Titel"
+    },
+    "status": {
+      "loading": "Laden..."
+    },
+    "values": {
+      "none": "-",
+      "notAvailable": "N.v.t."
+    }
+  },
+  "dashboard": {
+    "home": {
+      "gettingStarted": {
+        "body": "Gebruik de zijbalk om naar Items, Instellingen of beheerfuncties te navigeren.",
+        "description": "Verken de applicatie via de navigatie in de zijbalk",
+        "title": "Aan de slag"
+      },
+      "greeting": "Hoi, {{name}} 👋",
+      "metaTitle": "Dashboard",
+      "subtitle": "Welkom terug, leuk je weer te zien!"
+    },
+    "tasks": {
+      "actions": {
+        "queuing": "In wachtrij plaatsen...",
+        "queuingAll": "Alles in wachtrij plaatsen...",
+        "run": "Uitvoeren",
+        "runAll": "Alles uitvoeren"
+      },
+      "charts": {
+        "emptyJobs": "Geen taken in het systeem",
+        "emptyQueues": "Geen wachtrijgegevens",
+        "queueDistribution": {
+          "description": "Verdeling over prioriteitsniveaus",
+          "title": "Taken per wachtrij"
+        },
+        "statusDistribution": {
+          "description": "Huidige status van alle achtergrondtaken",
+          "title": "Verdeling taakstatus"
+        }
+      },
+      "feedback": {
+        "allQueued_one": "{{count}} taak is succesvol in de wachtrij geplaatst",
+        "allQueued_other": "Alle {{count}} taken zijn succesvol in de wachtrij geplaatst",
+        "enqueueError": "Taak in wachtrij plaatsen is mislukt",
+        "queued": "In wachtrij geplaatst: {{jobId}}",
+        "queueSomeError": "Sommige taken konden niet in de wachtrij worden geplaatst"
+      },
+      "jobsList": {
+        "allQueues": "Alle wachtrijen",
+        "allStatuses": "Alle statussen",
+        "description": "Bekijk gedetailleerde informatie over achtergrondtaken",
+        "empty": "Geen taken gevonden",
+        "queuePriority": "{{queue}} prioriteit",
+        "title": "Recente taken"
+      },
+      "metrics": {
+        "totalJobs": "Totaal aantal taken"
+      },
+      "page": {
+        "metaTitle": "Taakdashboard",
+        "subtitle": "Achtergrondtaken monitoren en beheren",
+        "title": "Taakdashboard"
+      },
+      "queue": {
+        "default": "Standaard",
+        "high": "Hoog",
+        "low": "Laag"
+      },
+      "samples": {
+        "description": "Plaats testtaken in de wachtrij om het taaksysteem end-to-end te verifiëren",
+        "exportCsv": {
+          "description": "Simuleert een langdurige data-export (~2s)",
+          "label": "Data exporteren (CSV)"
+        },
+        "exportJson": {
+          "description": "Simuleert een data-export in JSON-formaat (~2s)",
+          "label": "Data exporteren (JSON)"
+        },
+        "processFile": {
+          "description": "Simuleert bestandsverwerking, bijvoorbeeld OCR (~1s)",
+          "label": "Bestand verwerken"
+        },
+        "processFileHigh": {
+          "description": "Dezelfde verwerking, maar dan in de wachtrij met hoge prioriteit",
+          "label": "Bestand verwerken (hoge prioriteit)"
+        },
+        "sendEmail": {
+          "description": "Simuleert het verzenden van een transactionele e-mail (~0.5s)",
+          "label": "E-mail verzenden"
+        },
+        "title": "Voorbeeldtaken"
+      },
+      "status": {
+        "cancelled": "Geannuleerd",
+        "completed": "Voltooid",
+        "failed": "Mislukt",
+        "queued": "In wachtrij",
+        "running": "Actief"
+      }
+    }
+  },
+  "errorBoundary": {
+    "description": "Er is iets misgegaan. Probeer het opnieuw.",
+    "error": "Fout",
+    "goHome": "Ga naar home",
+    "oops": "Oeps!"
+  },
+  "items": {
+    "delete": {
+      "description": "Dit item wordt permanent verwijderd. Weet je het zeker? Deze actie kan niet ongedaan worden gemaakt.",
+      "title": "Item verwijderen",
+      "trigger": "Item verwijderen"
+    },
+    "feedback": {
+      "batchDeleted": "Items succesvol verwijderd",
+      "created": "Item succesvol aangemaakt",
+      "deleted": "Item succesvol verwijderd",
+      "updated": "Item succesvol bijgewerkt"
+    },
+    "form": {
+      "addDescription": "Vul de gegevens in om een nieuw item toe te voegen.",
+      "addTitle": "Item toevoegen",
+      "addTrigger": "Item toevoegen",
+      "editDescription": "Werk hieronder de itemgegevens bij.",
+      "editTitle": "Item bewerken",
+      "editTrigger": "Item bewerken"
+    },
+    "page": {
+      "emptyDescription": "Maak je eerste item aan om te beginnen",
+      "emptyTitle": "Nog geen items",
+      "metaTitle": "Items",
+      "subtitle": "Maak en beheer je items",
+      "title": "Items"
+    },
+    "table": {
+      "copyId": "ID kopiëren",
+      "id": "ID",
+      "noDescription": "Geen beschrijving"
+    }
+  },
+  "language": {
+    "dutch": "Nederlands",
+    "english": "Engels",
+    "title": "Taal",
+    "toggleLanguage": "Taal wisselen"
+  },
+  "layout": {
+    "searchPlaceholder": "Zoeken..."
+  },
+  "nav": {
+    "admin": {
+      "roles": "Rollen",
+      "tasks": "Taken",
+      "users": "Gebruikers"
+    },
+    "groups": {
+      "admin": "Beheer",
+      "menu": "Menu"
+    },
+    "primary": {
+      "dashboard": "Dashboard",
+      "items": "Items"
+    },
+    "user": {
+      "logout": "Uitloggen",
+      "settings": "Gebruikersinstellingen"
+    }
+  },
+  "permissions": {
+    "selector": {
+      "deselectAll": "Alles deselecteren",
+      "empty": "Geen rechten gevonden",
+      "searchPlaceholder": "Rechten zoeken...",
+      "selectAll": "Alles selecteren",
+      "selectedCount": "{{selected}} van {{total}} geselecteerd"
+    }
+  },
+  "roles": {
+    "feedback": {
+      "assigned": "Rol succesvol toegewezen",
+      "created": "Rol succesvol aangemaakt",
+      "deleted": "Rol succesvol verwijderd",
+      "removed": "Rol succesvol verwijderd van gebruiker",
+      "updated": "Rol succesvol bijgewerkt"
+    }
+  },
+  "settings": {
+    "entra": {
+      "description": "Je account wordt beheerd via Microsoft Entra. Ga naar het Microsoft Entra-portaal om je profielgegevens bij te werken.",
+      "title": "Cloud-beheerd account",
+      "unavailable": "Deze instelling is niet beschikbaar voor accounts die door Microsoft Entra worden beheerd."
+    },
+    "metaTitle": "Instellingen",
+    "password": {
+      "submit": "Wachtwoord bijwerken",
+      "success": "Wachtwoord succesvol bijgewerkt"
+    },
+    "profile": {
+      "avatar": {
+        "change": "Change photo",
+        "deleted": "Avatar removed successfully",
+        "remove": "Remove",
+        "success": "Avatar uploaded successfully",
+        "upload": "Upload photo"
+      },
+      "success": "Gebruiker succesvol bijgewerkt"
+    },
+    "subtitle": "Beheer je accountinstellingen en voorkeuren",
+    "tabs": {
+      "password": {
+        "description": "Wijzig je wachtwoord en beheer de beveiliging van je account",
+        "title": "Wachtwoord en beveiliging"
+      },
+      "profile": {
+        "description": "Werk je persoonlijke gegevens en e-mailadres bij",
+        "title": "Mijn profiel"
+      }
+    },
+    "title": "Instellingen"
+  },
+  "toast": {
+    "errorTitle": "Er is iets misgegaan!",
+    "successTitle": "Succes!"
+  },
+  "unauthorized": {
+    "adminPanel": "Beheerpaneel",
+    "backHome": "Terug naar home",
+    "description": "Je hebt geen toestemming om deze pagina te openen.",
+    "helpText": "Om dit gedeelte te openen heb je de juiste rechten of rol nodig. Neem contact op met je beheerder als je denkt dat je toegang zou moeten hebben.",
+    "metaTitle": "Toegang geweigerd",
+    "notSignedIn": "Je bent niet ingelogd.",
+    "signedInAs": "Je bent ingelogd als",
+    "superAdminHint": "Als Super admin kun je rollen en rechten beheren vanuit het beheerpaneel.",
+    "title": "Toegang geweigerd"
+  },
+  "users": {
+    "feedback": {
+      "batchDeleted": "Gebruikers succesvol verwijderd",
+      "created": "Gebruiker succesvol aangemaakt",
+      "deleted": "Gebruiker succesvol verwijderd",
+      "profileUpdated": "Profiel succesvol bijgewerkt",
+      "updated": "Gebruiker succesvol bijgewerkt"
+    }
+  },
+  "validation": {
+    "descriptionMax": "Beschrijving mag maximaal 500 tekens bevatten",
+    "entraRoleIdMax": "Entra-rol-ID mag maximaal 255 tekens bevatten",
+    "fullNameRequired": "Volledige naam is verplicht",
+    "invalidEmail": "Ongeldig e-mailadres",
+    "passwordConfirmationRequired": "Bevestiging van het wachtwoord is verplicht",
+    "passwordMin": "Wachtwoord moet minimaal 8 tekens bevatten",
+    "passwordRequired": "Wachtwoord is verplicht",
+    "passwordsDoNotMatch": "De wachtwoorden komen niet overeen",
+    "permissionRequired": "Er moet minimaal één recht zijn geselecteerd",
+    "roleNameMax": "Naam mag maximaal 255 tekens bevatten",
+    "roleNameMin": "Naam moet minimaal 2 tekens bevatten",
+    "roleNamePattern": "Rolnaam moet uit kleine letters, underscores en cijfers bestaan (bijv. super_admin, content_editor)",
+    "titleRequired": "Titel is verplicht"
+  }
+}

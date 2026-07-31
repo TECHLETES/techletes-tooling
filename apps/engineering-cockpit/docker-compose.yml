@@ -1,0 +1,167 @@
+services:
+
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+    volumes:
+      - postgres-data:/var/lib/postgresql
+      - database_backups:/database-backups
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    labels:
+      docker-volume-backup.exec-label: database
+      docker-volume-backup.archive-pre: |-
+        /bin/sh -c '
+        rm -f /database-backups/database.dump &&
+        PGPASSWORD="$${POSTGRES_PASSWORD}" \
+        pg_dump --username="$${POSTGRES_USER}" --dbname="$${POSTGRES_DB}" --format=custom --file=/database-backups/database.dump
+        '
+      docker-volume-backup.archive-post: |-
+        /bin/sh -c 'rm -f /database-backups/database.dump'
+
+  adminer:
+    image: adminer
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      - ADMINER_DESIGN=pepa-linha-dark
+
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: '${DOCKER_IMAGE?Variable not set}:${IMAGE_TAG-latest}'
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads-data:/app/uploads
+      - frontend-build:/app/frontend-dist
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/utils/health-check/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+  caddy:
+    image: ghcr.io/techletes/caddy-ratelimit:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+      - frontend-build:/srv:ro
+    environment:
+      - DOMAIN=${DOMAIN?Variable not set}
+      - CADDY_ACME_EMAIL=${CADDY_ACME_EMAIL?Variable not set}
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS --max-time 5 http://127.0.0.1:2019/config/ > /dev/null || exit 1"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  worker:
+    image: '${DOCKER_IMAGE?Variable not set}:${IMAGE_TAG-latest}'
+    restart: unless-stopped
+    entrypoint: ["python", "worker.py"]
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+    volumes:
+      - uploads-data:/app/uploads
+    env_file:
+      - .env
+
+  dozzle:
+    container_name: dozzle
+    image: amir20/dozzle:latest
+    command: "agent"
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - "7007:7007"
+    environment:
+      DOZZLE_LEVEL: info
+    healthcheck:
+      test: ["CMD", "/dozzle", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backup:
+    image: offen/docker-volume-backup:v2
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - BACKUP_CRON_EXPRESSIO=${BACKUP_CRON_EXPRESSION}
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS}
+      - BACKUP_FILENAME=${BACKUP_FILENAME}
+      - BACKUP_PRUNING_PREFIX=${BACKUP_PRUNING_PREFIX}
+      - AZURE_STORAGE_ACCOUNT_NAME=${AZURE_STORAGE_ACCOUNT_NAME}
+      - AZURE_STORAGE_CONTAINER_NAME=${AZURE_STORAGE_CONTAINER_NAME}
+      - AZURE_STORAGE_CONNECTION_STRING=${AZURE_STORAGE_CONNECTION_STRING}
+      - EXEC_LABEL=database
+      - TZ=Europe/Amsterdam
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - database_backups:/backup/database:ro
+      # Add each durable application-data volume here, mounted read-only under
+      # /backup. Remove examples that do not exist in a downstream project.
+      - uploads-data:/backup/uploads:ro
+      # Example for a downstream project:
+      # - application_uploads:/backup/uploads:ro
+      # Do not add postgres-data, Redis cache data, queues, build output,
+      # virtual environments, source code, or temporary data.
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+  frontend-build:
+  uploads-data:
+  database_backups:
