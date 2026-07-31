@@ -74,6 +74,17 @@ Once Subagent-Driven Development is confirmed for that child plan, the controlle
 
 The controller must not continue into the next subsystem without a new branch/worktree, updated `PROJECT_STATE.md`, and fresh explicit confirmation for that subsystem's plan.
 
+### Evidence-based resequencing
+
+Implementation order is a means to satisfy requirements, not an invariant. If
+verified evidence exposes a dependency cycle, an impossible exit gate, or a
+missing prerequisite, the controller may move the smallest safe prerequisite
+earlier or split it from its later subsystem. It must preserve all security,
+ownership, and acceptance requirements; update the affected specification and
+plan before implementation; record the rationale and verification in durable
+state; and keep the remaining later subsystem scope intact. Do not retain a
+known-broken sequence merely because it appears in the original roadmap.
+
 ## Per-task loop
 
 For every task in the active child implementation plan:

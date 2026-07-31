@@ -98,6 +98,9 @@ Before this state advances beyond subsystem 01, record:
 - Every exploration, implementation, review, fix, and final-review subagent uses `gpt-5.6-luna` with medium reasoning.
 - The controller owns planning, integration, review adjudication, state files, and exit-gate decisions.
 - This Sol/Terra/Luna policy is only for implementing the repository. It is not Engineering Cockpit product functionality.
+- Evidence may justify resequencing the roadmap: move the smallest safe
+  prerequisite earlier, update the affected spec/plan and durable evidence,
+  and preserve the later subsystem's remaining scope and all requirements.
 
 ### Product and architecture
 
