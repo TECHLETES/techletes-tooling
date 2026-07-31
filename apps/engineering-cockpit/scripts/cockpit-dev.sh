@@ -49,6 +49,7 @@ trap cleanup EXIT INT TERM
 
 uv run python -c '
 import os
+import subprocess
 import sys
 
 from backend.cockpit.runtime_instance import RuntimeInstanceLock, runtime_lock_path
@@ -62,7 +63,9 @@ except RuntimeInstanceAlreadyRunning as exc:
 file_descriptor = lock.fileno()
 os.set_inheritable(file_descriptor, True)
 os.environ["COCKPIT_INHERITED_LOCK_FD"] = str(file_descriptor)
-os.execv(sys.executable, [sys.executable, "-m", "uvicorn", *sys.argv[1:]])
+if subprocess.run(["uv", "run", "alembic", "upgrade", "head"], check=False).returncode:
+    raise SystemExit("database migrations failed")
+os.execvp("uv", ["uv", "run", *sys.argv[1:]])
 ' uvicorn backend.main:app \
   --host 127.0.0.1 \
   --port "${COCKPIT_BACKEND_PORT:-8000}" \
@@ -86,8 +89,6 @@ done
 if (( backend_ready == 0 )); then
   die "backend did not become ready"
 fi
-
-uv run alembic upgrade head
 
 cd ../frontend
 bun run dev --host 127.0.0.1 \
