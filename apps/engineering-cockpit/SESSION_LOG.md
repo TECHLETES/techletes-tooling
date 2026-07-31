@@ -47,3 +47,18 @@ Rules:
 - **Blockers:** None
 - **Working tree:** Not applicable; no application implementation has started
 - **Next action:** Create `feature/cockpit-01-bootstrap` in a dedicated worktree and execute the first unchecked task in subsystem 01.
+
+## 2026-07-31 16:16 Europe/Amsterdam — Controller and subagent workflow defined
+
+- **Subsystem:** Implementation workflow prerequisite for all subsystems
+- **Branch:** `main`
+- **Start HEAD:** Planning package on `main`
+- **End HEAD:** See repository `main`
+- **Plan step:** Define the portable Codex execution workflow before subsystem 01 starts
+- **Completed:** Defined GPT-5.6 Sol or Terra as the human-started controller, required `techletes-superpowers:subagent-driven-development`, fixed every subagent to GPT-5.6 Luna with medium reasoning, added task and final-review loops, and added the repository-root SDD progress ledger.
+- **Files changed:** `apps/engineering-cockpit/DEVELOPMENT_ORCHESTRATION.md`, `apps/engineering-cockpit/AGENTS.md`, `apps/engineering-cockpit/CODEX_RUNBOOK.md`, `apps/engineering-cockpit/IMPLEMENTATION.md`, `apps/engineering-cockpit/PROJECT_STATE.md`, `apps/engineering-cockpit/README.md`, `.superpowers/sdd/progress.md`
+- **Verification:** Updated files were written through the GitHub contents API and linked consistently — PASS
+- **Decisions/findings:** The Sol/Terra/Luna policy applies only to implementation of this repository. It is not Engineering Cockpit product functionality and must not be implemented in the application without a separate approved product specification.
+- **Blockers:** None
+- **Working tree:** Not applicable; application implementation has not started
+- **Next action:** Create `feature/cockpit-01-bootstrap`, start a Sol or Terra controller session, and paste the kickoff prompt from `CODEX_RUNBOOK.md`.
