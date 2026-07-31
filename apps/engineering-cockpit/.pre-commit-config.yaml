@@ -35,10 +35,10 @@ repos:
     hooks:
       - id: check-toml
       - id: check-json
-        exclude: openapi.json
+        exclude: ^apps/engineering-cockpit/frontend/openapi\.json$
       - id: check-symlinks
       - id: check-added-large-files
-        exclude: graphify-out/|frontend/public/assets/images/
+        exclude: ^apps/engineering-cockpit/(graphify-out/|frontend/public/assets/images/)
       - id: check-merge-conflict
       - id: detect-private-key
       - id: check-yaml
@@ -47,12 +47,12 @@ repos:
       - id: end-of-file-fixer
         exclude: |
           (?x)^(
-              frontend/src/client/.*|
-              backend/email-templates/build/.*|
-              coverage\.svg
+              apps/engineering-cockpit/frontend/src/client/.*|
+              apps/engineering-cockpit/backend/email-templates/build/.*|
+              apps/engineering-cockpit/coverage\.svg
           )$
       - id: trailing-whitespace
-        exclude: ^frontend/src/client/.*|coverage\.svg$
+        exclude: ^apps/engineering-cockpit/frontend/src/client/.*|^apps/engineering-cockpit/coverage\.svg$
 
   # Dependency vulnerability scanning with uv.lock
   - repo: https://github.com/pypa/pip-audit
@@ -85,18 +85,13 @@ repos:
         args: [--sync]
         require_serial: true
 
-  # Type checking with mypy
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.0
+  # Type checking with the cockpit's locked environment and configuration.
+  - repo: local
     hooks:
       - id: mypy
         name: Type check with mypy
-        args:
-          [
-            "--config-file=pyproject.toml",
-            "--install-types",
-            "--non-interactive",
-          ]
+        entry: bash -lc 'cd apps/engineering-cockpit && uv run mypy --config-file pyproject.toml'
+        language: system
         pass_filenames: false
 
   # Modernize Python syntax
@@ -124,7 +119,7 @@ repos:
       - id: bandit
         name: bandit (security check)
         args: [-ll, --skip, B101]
-        exclude: ^tests/
+        exclude: ^apps/engineering-cockpit/(backend/tests/|tests/)
         types: [python]
 
   # Docstring validation
@@ -133,7 +128,7 @@ repos:
     hooks:
       - id: pydocstyle
         name: pydocstyle (docstring validation)
-        exclude: ^(backend/tests/|backend/alembic/|backend/migrations/|tests/|alembic/|migrations/|example/)
+        exclude: ^apps/engineering-cockpit/(backend/tests/|backend/alembic/|backend/migrations/|tests/|alembic/|migrations/|example/)
         types: [python]
 
   - repo: local

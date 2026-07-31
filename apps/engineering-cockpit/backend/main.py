@@ -21,6 +21,19 @@ from backend.core.config import settings
 logger = logging.getLogger(__name__)
 
 
+def _default_lock_path() -> Path:
+    """Return a per-user runtime path for the process ownership lock."""
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime_dir:
+        return Path(runtime_dir) / "techletes-engineering-cockpit.lock"
+    return (
+        Path.home()
+        / ".cache"
+        / "techletes-engineering-cockpit"
+        / "instance.lock"
+    )
+
+
 def custom_generate_unique_id(route: APIRoute) -> str:
     """Generate consistent route IDs for OpenAPI documentation."""
     return f"{route.tags[0]}-{route.name}"
@@ -29,10 +42,11 @@ def custom_generate_unique_id(route: APIRoute) -> str:
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     """Application startup and shutdown events."""
-    lock_path = Path(
-        os.environ.get(
-            "COCKPIT_INSTANCE_LOCK_PATH", "/tmp/techletes-engineering-cockpit.lock"
-        )
+    configured_lock_path = os.environ.get("COCKPIT_INSTANCE_LOCK_PATH")
+    lock_path = (
+        Path(configured_lock_path)
+        if configured_lock_path
+        else _default_lock_path()
     )
     try:
         instance_lock = RuntimeInstanceLock.acquire(lock_path)

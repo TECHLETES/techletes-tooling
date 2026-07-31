@@ -38,7 +38,7 @@ class RuntimeInstanceLock:
     def acquire(cls, path: Path) -> RuntimeInstanceLock:
         """Acquire an exclusive non-blocking lock at ``path``."""
         path = Path(path)
-        path.parent.mkdir(parents=True, exist_ok=True)
+        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         file = path.open("a+")
         previous_metadata = cls._read_metadata(file)
         try:
