@@ -1,0 +1,30 @@
+name: techletes-engineering-cockpit
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-engineering_cockpit}
+    ports:
+      - "127.0.0.1:${COCKPIT_POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - cockpit-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  redis:
+    image: redis:8-alpine
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${COCKPIT_REDIS_PORT:-56379}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+volumes:
+  cockpit-postgres-data:
