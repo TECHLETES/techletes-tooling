@@ -7,13 +7,12 @@ updated_by: controller
 current_phase: "Phase 0 - bootstrap"
 current_subsystem: "01"
 current_plan: "superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md"
-current_status: blocked
+current_status: verification_pending
 working_branch: feature/cockpit-01-bootstrap
 working_worktree: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
 last_verified_commit: 1c4321c
-next_action: "Resolve the approved subsystem 05a Git-metadata mount dependency, then rerun Task 6 in-container pre-commit and final review."
-blockers:
-  - "Task 6 requires in-container pre-commit, but the nested application devcontainer has no Git metadata; the required linked-worktree metadata mount is owned by subsystem 05a."
+next_action: "Run final whole-branch review, then hand off the verified subsystem branch for local merge/push."
+blockers: []
 ---
 
 # Engineering Cockpit Project State

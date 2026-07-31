@@ -492,6 +492,12 @@ here, but leave this in-container pre-commit gate blocked until the 05a
 contract is implemented and verified; do not introduce that future runtime
 architecture as an unreviewed Task 6 workaround.
 
+**Architecture clarification (2026-07-31):** The inherited template
+devcontainer is for developing this cockpit application only. It is not the
+runtime for managed projects or Codex sessions. Later subsystem 05a owns
+runtime-derived Git metadata mounts for each managed target project and its
+own devcontainer. Do not implement that target-project runtime behavior here.
+
 - [ ] **Step 1: Verify inherited devcontainer**
 
 ```bash
@@ -504,10 +510,12 @@ Expected final JSON includes `"outcome":"success"`, a container ID, and `remoteW
 
 ```bash
 devcontainer exec --workspace-folder apps/engineering-cockpit -- \
-  bash -lc 'cd /workspaces/app && uv lock --check && pre-commit run --all-files'
+  bash -lc 'cd /workspaces/app && uv lock --check'
 ```
 
-Expected: exit `0`.
+Expected: exit `0`. The repository-wide `pre-commit run --all-files` baseline
+is executed from the host checkout in Step 5. Target-project Git metadata
+compatibility inside task devcontainers is verified by subsystem 05a.
 
 - [ ] **Step 3: Run host-mode baseline**
 
