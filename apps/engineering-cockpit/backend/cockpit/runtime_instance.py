@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 APPLICATION_VERSION = "0.1.0"
+INHERITED_LOCK_FD_ENV = "COCKPIT_INHERITED_LOCK_FD"
 
 
 def default_runtime_lock_path() -> Path:
@@ -83,6 +84,18 @@ class RuntimeInstanceLock:
         return cls._write_metadata(path, file, previous_metadata)
 
     @classmethod
+    def acquire_for_lifespan(cls, path: Path) -> RuntimeInstanceLock:
+        """Adopt a launcher lock or acquire one during application startup."""
+        inherited_fd = os.environ.pop(INHERITED_LOCK_FD_ENV, None)
+        if inherited_fd is None:
+            return cls.acquire(path)
+        try:
+            file = os.fdopen(int(inherited_fd), "a+")
+        except (OSError, ValueError) as exc:
+            raise RuntimeError("invalid inherited cockpit runtime lock") from exc
+        return cls._write_metadata(path, file)
+
+    @classmethod
     def _write_metadata(
         cls,
         path: Path,
@@ -136,6 +149,10 @@ class RuntimeInstanceLock:
             fcntl.flock(self._file.fileno(), fcntl.LOCK_UN)
         finally:
             self._file.close()
+
+    def fileno(self) -> int:
+        """Return the descriptor whose lifetime owns this process lock."""
+        return int(self._file.fileno())
 
     def __enter__(self) -> RuntimeInstanceLock:
         """Return the held lock for use in a context manager."""

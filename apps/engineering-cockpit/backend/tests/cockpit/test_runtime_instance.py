@@ -80,3 +80,20 @@ def test_lock_is_recovered_after_owner_process_exits(tmp_path: Path) -> None:
         assert metadata["pid"] != owner_pid
     finally:
         lock.release()
+
+
+def test_lifespan_can_adopt_launcher_lock_descriptor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "instance.lock"
+    launcher_lock = RuntimeInstanceLock.acquire(path)
+    inherited_fd = os.dup(launcher_lock.fileno())
+    monkeypatch.setenv("COCKPIT_INHERITED_LOCK_FD", str(inherited_fd))
+
+    lifespan_lock = RuntimeInstanceLock.acquire_for_lifespan(path)
+    try:
+        with pytest.raises(RuntimeInstanceAlreadyRunning):
+            RuntimeInstanceLock.acquire(path)
+    finally:
+        lifespan_lock.release()
+        launcher_lock.release()

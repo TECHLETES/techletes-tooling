@@ -40,21 +40,7 @@ export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:${COCKPIT_REDIS_PORT:-56379}/0}
 grep -qi microsoft /proc/version
 
 bash scripts/cockpit-services-up.sh
-uv run python -c '
-import sys
-
-from backend.cockpit.runtime_instance import RuntimeInstanceAlreadyRunning
-from backend.cockpit.runtime_instance import RuntimeInstanceLock, runtime_lock_path
-
-try:
-    lock = RuntimeInstanceLock.acquire(runtime_lock_path())
-except RuntimeInstanceAlreadyRunning as exc:
-    print(f"Error: {exc}", file=sys.stderr)
-    raise SystemExit(1) from None
-lock.release()
-'
 cd backend
-uv run alembic upgrade head
 
 backend_pid=""
 frontend_pid=""
@@ -63,7 +49,23 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-uv run uvicorn backend.main:app \
+uv run python -c '
+import os
+import sys
+
+from backend.cockpit.runtime_instance import RuntimeInstanceLock, runtime_lock_path
+from backend.cockpit.runtime_instance import RuntimeInstanceAlreadyRunning
+
+try:
+    lock = RuntimeInstanceLock.acquire(runtime_lock_path())
+except RuntimeInstanceAlreadyRunning as exc:
+    print(f"Error: {exc}", file=sys.stderr)
+    raise SystemExit(1) from None
+file_descriptor = lock.fileno()
+os.set_inheritable(file_descriptor, True)
+os.environ["COCKPIT_INHERITED_LOCK_FD"] = str(file_descriptor)
+os.execv(sys.executable, [sys.executable, "-m", "uvicorn", *sys.argv[1:]])
+' uvicorn backend.main:app \
   --host 127.0.0.1 \
   --port "${COCKPIT_BACKEND_PORT:-8000}" \
   --workers 1 &
@@ -86,6 +88,8 @@ done
 if (( backend_ready == 0 )); then
   die "backend did not become ready"
 fi
+
+uv run alembic upgrade head
 
 cd ../frontend
 bun run dev --host 127.0.0.1 \

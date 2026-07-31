@@ -37,7 +37,7 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
     """Application startup and shutdown events."""
     lock_path = runtime_lock_path()
     try:
-        instance_lock = RuntimeInstanceLock.acquire(lock_path)
+        instance_lock = RuntimeInstanceLock.acquire_for_lifespan(lock_path)
     except RuntimeInstanceAlreadyRunning as exc:
         logger.error("%s", exc)
         raise
