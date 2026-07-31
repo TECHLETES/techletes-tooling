@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "frontend",
+      "name": "engineering-cockpit-frontend",
       "dependencies": {
         "@azure/msal-browser": "^4.30.0",
         "@azure/msal-react": "^3.0.29",

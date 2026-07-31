@@ -1,12 +1,12 @@
 [project]
-name = "full-stack-template"
+name = "engineering-cockpit"
 version = "0.1.0"
-description = "Techletes full-stack template for FastAPI, SQLModel, and React projects."
+description = "Techletes Engineering Cockpit control plane for local Codex development tasks."
 readme = "README.md"
 requires-python = ">=3.12,<4.0"
 authors = [{ name = "Thom Ezechiels", email = "thom@techletes.ai" }]
 maintainers = [{ name = "Techletes DevOps Team", email = "dev@techletes.ai" }]
-keywords = ["fastapi", "full-stack", "python", "react", "sqlmodel", "template"]
+keywords = ["fastapi", "codex", "engineering", "python", "react", "sqlmodel"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -42,9 +42,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/TECHLETES/full-stack-template"
-Issues = "https://github.com/TECHLETES/full-stack-template/issues"
-Repository = "https://github.com/TECHLETES/full-stack-template"
+Homepage = "https://github.com/TECHLETES/techletes-tooling/tree/main/apps/engineering-cockpit"
+Issues = "https://github.com/TECHLETES/techletes-tooling/issues/7"
+Repository = "https://github.com/TECHLETES/techletes-tooling"
 
 [dependency-groups]
 dev = [

@@ -1,157 +1,90 @@
 ---
-name: Techletes Full-Stack Template — Workspace Instructions
-description: Concise workspace rules for FastAPI, React, PostgreSQL, and the service-first frontend architecture
+name: Techletes Engineering Cockpit — Workspace Instructions
+description: Project rules for the local-first WSL control plane and target-task development environment
 ---
 
-# Techletes Full-Stack Template — Workspace Instructions
+# Techletes Engineering Cockpit
 
-## Template Bootstrap for New Repositories
+## Project context
 
-This repository is a reusable template. When a coding agent starts work in a
-repository created from this template, its first implementation action must be
-to update `AGENTS.md` and `README.md` for the current repository and project.
-Do this before changing application code, adding dependencies, or starting
-feature work.
+Engineering Cockpit is a local-first control plane for launching and
+supervising Codex development tasks across repositories. The operational
+backend runs natively in WSL as one FastAPI process and one Uvicorn worker. It
+owns host paths, Docker/Dev Container CLI calls, and long-lived app-server
+stdio connections. PostgreSQL is durable state; Redis is only a live wakeup
+mechanism.
 
-The bootstrap pass must:
+The application was bootstrapped from the current
+`TECHLETES/full-stack-template` snapshot recorded in
+`.techletes-template-source.yml`; adapt its conventions rather than creating a
+competing scaffold.
 
-- Inspect the current `pyproject.toml`, source and test directories, docs,
-  workflows, and available development commands before writing project
-  context.
-- Replace generic template descriptions with the actual project name,
-  purpose, architecture, entry points, repository structure, setup path, and
-  verification commands.
-- Add concise project-specific instructions for important workflows,
-  boundaries, integrations, data handling, deployment, and known pitfalls.
-- Update the README's overview, features, structure, setup, usage, and links
-  so they describe the current project rather than the template examples.
-- Preserve the template's generally applicable coding standards, security
-  rules, dependency workflow, type-checking requirements, tool configuration,
-  and verification expectations unless the current repository has an explicit
-  and documented replacement.
-- Base every project-specific instruction on the repository's actual files and
-  commands. Do not invent architecture, scripts, services, or requirements.
-- Review the documentation diff and run the smallest relevant documentation or
-  repository checks before continuing with implementation.
+The target repository for a task runs in its own linked worktree and
+devcontainer. Codex runs inside that target devcontainer through the backend's
+owned `codex app-server` stdio connection. Do not use TUI scraping, multiple
+operational Uvicorn workers, or guessed host paths and commands.
 
-When working on this template repository itself, keep the general guidance
-maintained here and in `README.md`, and describe the template's intended
-bootstrap behavior instead of replacing it with a downstream project's
-context.
+Detailed subsystem specifications and plans are indexed in
+[`superpowers/README.md`](superpowers/README.md).
 
----
+## Non-negotiables
 
-## Purpose
+- Keep browser, PostgreSQL, and Redis exposure loopback-only in local mode.
+- Treat PostgreSQL as the source of truth; Redis notifications are disposable.
+- Preserve authentication, authorization, validation, recovery, and audit
+  boundaries at trust boundaries.
+- Do not automatically replay lost turns, answer questions or approvals, merge
+  changes, deploy, or delete branches, worktrees, or volumes.
+- Use generated app-server protocol schemas from the exact pinned Codex
+  version. Do not hand-roll or scrape protocol output.
+- Prefer the existing architecture and dependencies. Keep changes small and
+  add a focused test for non-trivial behavior.
 
-This repository is Techletes' internal full-stack template for FastAPI, SQLModel, PostgreSQL, React, TypeScript, Vite, and shadcn/ui. Keep changes aligned with the current docs and prefer concise, maintainable patterns over repeated inline instructions.
+## Development and validation
 
-Primary references:
+Development uses the repository devcontainer for the application workspace and
+its PostgreSQL, Redis, Adminer, and Mailpit support services. Run backend and
+frontend commands locally in that environment; do not use `docker compose up`
+or `docker compose build` as an ad-hoc development shortcut.
 
-- [frontend.instructions.md](.github/instructions/frontend.instructions.md)
-- [backend.instructions.md](.github/instructions/backend.instructions.md)
-- [docs/specs/FRONTEND-ARCHITECTURE.md](docs/specs/FRONTEND-ARCHITECTURE.md)
-- [docs/specs/TRANSLATIONS.md](docs/specs/TRANSLATIONS.md)
-- [docs/specs/RBAC-SYSTEM.md](docs/specs/RBAC-SYSTEM.md)
-- [docs/development.md](docs/development.md)
-- [docs/deployment.md](docs/deployment.md)
-
-## Non-Negotiables
-
-1. Do not run `docker compose up` or `docker compose build` for development unless explicitly asked.
-2. Use `docker-compose.dev.yml` only for base services when PostgreSQL or Redis are needed and not already available locally.
-3. Run backend and frontend locally by default.
-4. Keep frontend code service-first: components and hooks use `@/services`, and `@/client` is for generated types and service-layer internals only.
-5. Keep route nesting correct for TanStack Router: layout routes render `<Outlet />`, and default children live in `index.tsx`.
-6. Keep UI aligned with [frontend/design-brief.json](frontend/design-brief.json).
-
-## Quick Commands
-
-### Backend
+Backend commands, from `apps/engineering-cockpit/backend/`:
 
 ```bash
-cd backend
 uv sync
-./scripts/run-dev.sh
 ./scripts/test.sh
 ./scripts/lint.sh
 ```
 
-### Frontend
+Frontend commands, from `apps/engineering-cockpit/frontend/`:
 
 ```bash
-cd frontend
 bun install
-bun run dev
-bun run generate-client
 bun run lint
 bun run typecheck
+bun run build
 bun run test
 ```
 
-Use `bun run generate-client` after backend API changes. Do not hand-edit generated files.
+After backend API changes, regenerate the typed frontend client with
+`bun run generate-client`. Never hand-edit generated client files.
 
-## Backend Rules
+Host operational mode is WSL-native, single-process, and loopback-bound. It
+exists so the control plane can reach the host Git, Docker, Dev Container CLI,
+and Codex installation; target task execution remains inside isolated target
+devcontainers. Use the project bootstrap/runtime launcher and preflight checks
+when they are present rather than starting a second Uvicorn worker manually.
 
-- FastAPI route code lives in `backend/api/routes/`.
-- SQLModel models live in `backend/models.py`.
+## Repository conventions
+
+- FastAPI routes live in `backend/api/routes/`; SQLModel models live in the
+  existing backend model modules.
 - Database changes require Alembic migrations.
-- Return API response models, not table models.
-- Keep auth, DB, and config logic in the existing core modules.
+- Frontend runtime API calls go through `frontend/src/services/`; generated
+  types are imported from `@/client`.
+- User-facing strings use the existing i18n resources.
+- Never commit credentials, copied Codex auth, secret values, or complete
+  environment dumps.
 
-See [backend.instructions.md](instructions/backend.instructions.md) for backend-specific conventions.
-
-## Frontend Rules
-
-- Use the service layer in `frontend/src/services/` for runtime API calls.
-- Use feature hooks in `frontend/src/hooks/` for React Query state and mutations.
-- Keep components presentational where possible.
-- Use `useCustomToast()` for user-facing success and error feedback.
-- Use typed imports from `@/client` only for generated types.
-- Prefer plain function components and hooks; do not add class components.
-- Use dynamic translation keys and `useTranslation` for user-facing strings. Do not hardcode strings in components. Use scripts/hooks/check-frontend-translations.sh to validate after implementation.
-
-See [frontend.instructions.md](instructions/frontend.instructions.md) and [docs/specs/FRONTEND-ARCHITECTURE.md](docs/specs/FRONTEND-ARCHITECTURE.md) for examples.
-
-## Testing
-
-- Backend: `./scripts/test.sh`
-- Frontend lint/typecheck: `bun run lint` and `bun run typecheck`
-- Frontend E2E: `bun run test`
-- Use Playwright and backend test fixtures that already exist in the repo.
-
-Prefer the smallest useful validation step for the area you changed. If you touch backend models, run the migration flow. If you touch frontend API usage, regenerate the client and typecheck.
-
-## Environment
-
-Key frontend environment variables:
-
-- `VITE_API_URL`
-
-Key backend environment variables:
-
-- `SECRET_KEY`
-- `DATABASE_URL`
-- `ENVIRONMENT`
-- `FIRST_SUPERUSER`
-- `FIRST_SUPERUSER_PASSWORD`
-- `SMTP_HOST`
-- `SMTP_PORT`
-- `BACKEND_CORS_ORIGINS`
-
-## Entra Integration
-
-Microsoft Entra support is already documented and implemented as an opt-in feature. Use [docs/ENTRA_SETUP.md](docs/ENTRA_SETUP.md) and the auth docs instead of repeating setup steps here.
-
-## When To Ask
-
-Ask before making architecture changes that affect:
-
-- route structure or guards
-- service/hook boundaries
-- auth flows
-- database migrations
-- frontend design changes that affect the design brief
-
-## Short Version
-
-If in doubt, keep changes small, keep runtime API calls out of components, regenerate the client after backend API changes, and defer detailed implementation guidance to the linked docs.
+When a change affects task isolation, authentication, protocol schemas,
+recovery, delivery, or cleanup, read the matching numbered specification and
+implementation plan before editing code.
