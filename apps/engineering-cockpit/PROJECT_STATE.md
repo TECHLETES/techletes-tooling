@@ -2,16 +2,16 @@
 schema_version: 1
 project: techletes-engineering-cockpit
 planning_issue: TECHLETES/techletes-tooling#7
-updated_at: 2026-07-31T16:35:00+02:00
+updated_at: 2026-07-31T17:10:00+02:00
 updated_by: controller
 current_phase: "Phase 0 - bootstrap"
 current_subsystem: "01"
 current_plan: "superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md"
-current_status: ready_to_start
-working_branch: null
-working_worktree: null
-last_verified_commit: null
-next_action: "Create feature/cockpit-01-bootstrap in ~/worktrees/techletes-tooling/cockpit-01-bootstrap, then execute the active child plan with confirmed Subagent-Driven Development."
+current_status: in_progress
+working_branch: feature/cockpit-01-bootstrap
+working_worktree: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
+last_verified_commit: f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095
+next_action: "Run independent Tasks 2–5 in separate worktrees from the reviewed Task 1 baseline, then consolidate review before Task 6."
 blockers: []
 ---
 
@@ -27,12 +27,12 @@ Git history, the current child implementation plan, `.superpowers/sdd/progress.m
 | --- | --- |
 | Phase | Phase 0 — bootstrap |
 | Active subsystem | 01 — Template bootstrap and WSL runtime topology |
-| Status | Ready to start |
-| Branch | Not created yet |
-| Worktree | Not created yet |
-| Last verified commit | Planning package on `main` |
-| Last verification | Planning documents, portable handoff files, and Sol/Terra controller/Luna Medium subagent workflow created |
-| Immediate next action | Create `feature/cockpit-01-bootstrap` in `~/worktrees/techletes-tooling/cockpit-01-bootstrap`, start Sol or Terra, and use the kickoff prompt in `CODEX_RUNBOOK.md` |
+| Status | In progress |
+| Branch | `feature/cockpit-01-bootstrap` |
+| Worktree | `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap` |
+| Last verified commit | `f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095` |
+| Last verification | Task 1 template snapshot completeness (377/377 files), secret scan, and Luna Medium re-review — PASS |
+| Immediate next action | Run independent Tasks 2–5 in separate worktrees, then consolidate review before Task 6 |
 | Blockers | None known |
 
 ## Subsystem progress
@@ -41,7 +41,7 @@ Status values: `not_started`, `in_progress`, `blocked`, `verification_pending`, 
 
 | ID | Subsystem | Status | Branch/PR | Evidence or next gate |
 | --- | --- | --- | --- | --- |
-| 01 | Template bootstrap and WSL runtime topology | not_started | — | Bootstrap from current full-stack template and pass baseline exit criteria |
+| 01 | Template bootstrap and WSL runtime topology | in_progress | `feature/cockpit-01-bootstrap` | Task 1 snapshot/import in progress |
 | 02 | Repository registry, configuration, and diagnostics | not_started | — | Requires 01 |
 | 03 | Task domain, PostgreSQL persistence, state, and locking | not_started | — | Requires 01–02 |
 | 04 | Git worktrees, branches, synchronization, overlap, and removal | not_started | — | Requires 03 |
@@ -113,9 +113,21 @@ None known. Add only blockers with concrete evidence, owner, and unblock conditi
 
 ## Working-tree handoff
 
-No implementation worktree exists yet.
+Controller model: Sol/Terra
+Active plan consent: confirmed
+Branch: feature/cockpit-01-bootstrap
+Worktree path: /home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap
+HEAD: f964d91c0b76fadb0187284b6c65bb16037c45bc
+Working tree: dirty (controller-owned durable-state initialization)
+Uncommitted files: `PROJECT_STATE.md`, `.superpowers/sdd/progress.md`
+Current plan task: Task 1 — Snapshot and import the current full-stack template
+Active subagent role/task: pending Luna Medium implementer dispatch
+Last reviewed task: None
+Last command run: task-brief Task 1 generation
+Last command result: PASS; `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap/.superpowers/sdd/task-1-brief.md`
+Next exact command/action: Dispatch the Task 1 Luna Medium implementer.
 
-When implementation begins, replace this section with:
+For future checkpoints, replace this section with current values in this form:
 
 ```text
 Controller model: Sol|Terra

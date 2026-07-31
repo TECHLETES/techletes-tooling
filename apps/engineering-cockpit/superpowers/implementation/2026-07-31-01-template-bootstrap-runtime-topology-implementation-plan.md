@@ -18,6 +18,16 @@
 - Do not expose or copy secret values into committed files.
 - Do not remove inherited auth/RBAC/example features in this plan.
 
+### Task applicability
+
+These are subsystem exit constraints, not a direction to alter the imported
+template during Task 1. Task 1 must import and record the current template
+snapshot unchanged except for preserving `superpowers/` and adding source
+metadata. Task 2 owns project identity and documentation, Task 3 owns the
+loopback-only local support services, and Task 4 owns the single-worker,
+loopback-bound operational launcher. Review each task against its stated
+scope while preserving these constraints as the subsystem completion gate.
+
 ## Dependencies
 
 None. This is the first implementation plan.
@@ -44,7 +54,7 @@ None. This is the first implementation plan.
 **Interfaces:**
 - `.techletes-template-source.yml` contains exactly `repository`, `branch`, `commit`, and `imported_at`.
 
-- [ ] **Step 1: Create an isolated implementation worktree**
+- [x] **Step 1: Create an isolated implementation worktree**
 
 ```bash
 git fetch origin
@@ -56,7 +66,7 @@ cd ~/worktrees/techletes-tooling/cockpit-01-bootstrap
 
 Expected: `git branch --show-current` prints `feature/cockpit-01-bootstrap`.
 
-- [ ] **Step 2: Fetch the template into a temporary remote**
+- [x] **Step 2: Fetch the template into a temporary remote**
 
 ```bash
 git remote add full-stack-template https://github.com/TECHLETES/full-stack-template.git
@@ -67,7 +77,7 @@ printf '%s\n' "$TEMPLATE_COMMIT"
 
 Expected: a 40-character commit SHA.
 
-- [ ] **Step 3: Back up the planning directory and import the snapshot**
+- [x] **Step 3: Back up the planning directory and import the snapshot**
 
 ```bash
 mkdir -p /tmp/engineering-cockpit-superpowers
@@ -84,7 +94,7 @@ cp -a /tmp/engineering-cockpit-superpowers/. \
 
 Expected: `apps/engineering-cockpit/backend/main.py`, `frontend/package.json`, `.devcontainer/devcontainer.json`, and `superpowers/README.md` all exist.
 
-- [ ] **Step 4: Record source metadata**
+- [x] **Step 4: Record source metadata**
 
 Create `apps/engineering-cockpit/.techletes-template-source.yml`:
 
@@ -97,7 +107,7 @@ imported_at: 2026-07-31
 
 Replace `REPLACE_WITH_TEMPLATE_COMMIT` with the actual SHA from Step 2.
 
-- [ ] **Step 5: Verify no nested Git metadata was imported**
+- [x] **Step 5: Verify no nested Git metadata was imported**
 
 ```bash
 test ! -e apps/engineering-cockpit/.git
@@ -106,7 +116,7 @@ git status --short apps/engineering-cockpit | head -20
 
 Expected: the test exits `0`; imported files are shown as repository changes.
 
-- [ ] **Step 6: Commit the snapshot separately**
+- [x] **Step 6: Commit the snapshot separately**
 
 ```bash
 git add apps/engineering-cockpit

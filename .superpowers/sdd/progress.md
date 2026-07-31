@@ -22,11 +22,11 @@ It is part of the repository implementation workflow only. It is not application
 | Project | Techletes Engineering Cockpit |
 | Active subsystem | 01 — Template bootstrap and WSL runtime topology |
 | Plan | `apps/engineering-cockpit/superpowers/implementation/2026-07-31-01-template-bootstrap-runtime-topology-implementation-plan.md` |
-| Branch | Not created yet |
-| Worktree | Not created yet |
-| Plan base commit | Not recorded yet |
-| Controller session | Not started |
-| Status | ready_to_start |
+| Branch | `feature/cockpit-01-bootstrap` |
+| Worktree | `/home/thom/worktrees/techletes-tooling/cockpit-01-bootstrap` |
+| Plan base commit | `f964d91c0b76fadb0187284b6c65bb16037c45bc` |
+| Controller session | Sol/Terra controller, 2026-07-31 |
+| Status | in_progress |
 
 ## Task ledger
 
@@ -47,7 +47,12 @@ interrupted
 
 | Task | Status | Base SHA | Implementer commit(s) | Implementer report | Review package | Reviewer result | Remaining findings | Next action |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Not initialized | pending | — | — | — | — | — | — | Parse the active child plan after creating the subsystem worktree |
+| 1 | review_passed | f964d91c0b76fadb0187284b6c65bb16037c45bc | `2f4af78d6a0562d298f26dc396fb49da3f3462c3`, `f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095` | `.superpowers/sdd/task-1-report.md` | `.superpowers/sdd/review-f964d91..f7b61d7.diff` | Luna Medium re-review approved | None | Create separate worktrees for parallel Tasks 2–5 |
+| 2 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
+| 3 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
+| 4 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
+| 5 | pending | f7b61d7e7eaca50d1375ab146b3a4ebc3bd1a095 | — | — | — | — | — | Parallel batch after Task 1 reviewed baseline |
+| 6 | pending | — | — | — | — | — | — | Verify the integrated Tasks 2–5 batch |
 
 ## Minor findings for final review
 
