@@ -1,0 +1,45 @@
+# Python
+__pycache__
+*.pyc
+.mypy_cache
+.coverage
+htmlcov
+.venv
+*.egg-info
+
+# Node/Frontend
+frontend/node_modules
+frontend/dist
+frontend/.vite
+frontend/coverage
+
+# Git
+.git
+.gitignore
+.github
+
+# Development
+.env.local
+.env.*.local
+*.log
+.DS_Store
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# CI/CD
+.github/
+
+# Documentation
+docs/
+README.md
+CONTRIBUTING.md
+SECURITY.md
+LICENSE
+
+# Test coverage
+htmlcov/
+.coverage

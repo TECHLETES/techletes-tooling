@@ -1,0 +1,3 @@
+# This directory is used to store built frontend static files during Docker build
+# In development, the directory may be empty
+# In production Docker image, this will contain the compiled frontend assets

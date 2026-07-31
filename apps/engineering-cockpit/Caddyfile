@@ -1,0 +1,273 @@
+{
+	email {$CADDY_ACME_EMAIL:dev@techletes.ai}
+}
+
+# Caddyfile for production deployment
+
+{$DOMAIN} {
+	root * /srv
+	encode gzip zstd
+
+	request_body {
+		max_size 50MB
+	}
+
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' wss: https://graph.microsoft.com https://login.microsoftonline.com; frame-src https://accounts.google.com https://login.microsoftonline.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		-Server
+	}
+
+	rate_limit {
+		zone login_limit {
+			match {
+				path /api/v1/login/access-token
+				method POST
+			}
+			key {remote_host}
+			window 5m
+			events 20
+		}
+
+		zone signup_limit {
+			match {
+				path /api/v1/users/signup
+				method POST
+			}
+			key {remote_host}
+			window 15m
+			events 10
+		}
+
+		zone password_recovery_limit {
+			match {
+				path /api/v1/password-recovery/* /api/v1/reset-password/
+				method POST
+			}
+			key {remote_host}
+			window 15m
+			events 10
+		}
+
+		zone oauth_login_limit {
+			match {
+				path /api/v1/auth/entra/login /api/v1/auth/google/login /api/v1/auth/github/exchange-code
+				method POST
+			}
+			key {remote_host}
+			window 5m
+			events 20
+		}
+
+		zone users_list_limit {
+			match {
+				path /api/v1/users/
+				method GET
+			}
+			key {remote_host}
+			window 1m
+			events 30
+		}
+	}
+
+	@health path /api/v1/utils/health-check/
+	handle @health {
+		reverse_proxy backend:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			transport http {
+				dial_timeout 5s
+				read_timeout 60s
+				write_timeout 60s
+			}
+		}
+	}
+
+	@ws path /api/v1/notifications/ws
+	handle @ws {
+		reverse_proxy backend:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			transport http {
+				dial_timeout 10s
+				read_timeout 0
+				write_timeout 0
+			}
+		}
+	}
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy backend:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			transport http {
+				dial_timeout 5s
+				read_timeout 60s
+				write_timeout 60s
+			}
+		}
+	}
+
+	@assets path /assets/*
+	handle @assets {
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
+
+www.{$DOMAIN} {
+	redir https://{$DOMAIN}{uri} permanent
+}
+
+adminer.{$DOMAIN} {
+	reverse_proxy adminer:8080
+}
+
+staging.{$DOMAIN} {
+	root * /srv-staging
+	encode gzip zstd
+
+	request_body {
+		max_size 50MB
+	}
+
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' wss: https://graph.microsoft.com https://login.microsoftonline.com; frame-src https://accounts.google.com https://login.microsoftonline.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		-Server
+	}
+
+	rate_limit {
+		zone login_limit {
+			match {
+				path /api/v1/login/access-token
+				method POST
+			}
+			key {remote_host}
+			window 5m
+			events 20
+		}
+
+		zone signup_limit {
+			match {
+				path /api/v1/users/signup
+				method POST
+			}
+			key {remote_host}
+			window 15m
+			events 10
+		}
+
+		zone password_recovery_limit {
+			match {
+				path /api/v1/password-recovery/* /api/v1/reset-password/
+				method POST
+			}
+			key {remote_host}
+			window 15m
+			events 10
+		}
+
+		zone oauth_login_limit {
+			match {
+				path /api/v1/auth/entra/login /api/v1/auth/google/login /api/v1/auth/github/exchange-code
+				method POST
+			}
+			key {remote_host}
+			window 5m
+			events 20
+		}
+
+		zone users_list_limit {
+			match {
+				path /api/v1/users/
+				method GET
+			}
+			key {remote_host}
+			window 1m
+			events 30
+		}
+	}
+
+	@health path /api/v1/utils/health-check/
+	handle @health {
+		reverse_proxy backend-staging:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			transport http {
+				dial_timeout 5s
+				read_timeout 60s
+				write_timeout 60s
+			}
+		}
+	}
+
+	@ws path /api/v1/notifications/ws
+	handle @ws {
+		reverse_proxy backend-staging:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			transport http {
+				dial_timeout 10s
+				read_timeout 0
+				write_timeout 0
+			}
+		}
+	}
+
+	@api path /api/*
+	handle @api {
+		reverse_proxy backend-staging:8000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			transport http {
+				dial_timeout 5s
+				read_timeout 60s
+				write_timeout 60s
+			}
+		}
+	}
+
+	@assets path /assets/*
+	handle @assets {
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}
+
+www.staging.{$DOMAIN} {
+	redir https://staging.{$DOMAIN}{uri} permanent
+}
+
+adminer.staging.{$DOMAIN} {
+	reverse_proxy adminer-staging:8080
+}

@@ -1,0 +1,66 @@
+name: Test Database
+
+on:
+  workflow_dispatch: {}
+  workflow_call:
+
+jobs:
+  backend-migrations:
+    name: Run backend migrations (Postgres)
+    runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: ${{ github.workspace }}
+      PROJECT_NAME: Full Stack Template
+      SECRET_KEY: test-secret-key-for-ci-only # pragma: allowlist secret
+      FRONTEND_HOST: http://localhost:5173
+      FLASK_ENV: development
+      REDIS_URL: redis://localhost:6379/0
+      POSTGRES_DB: app
+      POSTGRES_USER: postgres
+      POSTGRES_SERVER: localhost
+      POSTGRES_PASSWORD: changethis #pragma: allowlist secret
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      FIRST_SUPERUSER: admin@example.com
+      FIRST_SUPERUSER_PASSWORD: testpassword #pragma: allowlist secret
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: changethis #pragma: allowlist secret
+          POSTGRES_DB: app
+        ports: [ "5432:5432" ]
+        options: >-
+          --health-cmd "pg_isready -U postgres -d app"
+          --health-interval 5s
+          --health-timeout 2s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v6.0.3
+      - uses: actions/setup-python@v6.2.0
+        with:
+          python-version: 3.12
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - name: Add uv to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - uses: actions/cache@v4.2.0
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-uv-${{ hashFiles('uv.lock') }}
+          restore-keys: ${{ runner.os }}-uv-
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev
+      - name: Install Python dependencies
+        run: uv sync --frozen
+      - name: Apply database migrations (Postgres)
+        working-directory: backend
+        run: |
+          uv run alembic upgrade head
+      - name: Check migration status (Postgres)
+        working-directory: backend
+        run: |
+          uv run alembic current

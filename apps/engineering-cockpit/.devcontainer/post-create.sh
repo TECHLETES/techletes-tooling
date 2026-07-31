@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${repo_root}"
+
+sudo install -d -o "$(id -u)" -g "$(id -g)" /app/uploads
+echo "Ensured /app/uploads exists for local file storage."
+
+echo "Bootstrapping the container workspace with uv..."
+rm -rf .venv
+uv sync --frozen
+uv tool install graphifyy
+
+if [[ -d .git ]]; then
+  uv run pre-commit install --install-hooks
+fi
+
+if command -v bun >/dev/null 2>&1; then
+  echo "Bootstrapping frontend dependencies with bun..."
+  bun_cache_dir="${BUN_INSTALL:-${HOME}/.cache/bun}"
+  bun_tmp_dir="${TMPDIR:-${bun_cache_dir}/tmp}"
+  mkdir -p "${bun_cache_dir}"
+  mkdir -p "${bun_tmp_dir}"
+  (cd frontend && TMPDIR="${bun_tmp_dir}" bun install --cache-dir "${bun_cache_dir}")
+else
+  echo "bun not found; skipping frontend dependency bootstrap."
+fi
+
+if ! uv run python -c "import ipykernel" >/dev/null 2>&1; then
+  echo "Notebook execution in the container uses the local Python environment and needs ipykernel available there."
+fi
+
+if command -v op >/dev/null 2>&1; then
+  echo "1Password CLI detected. Run 'op account list' if you need secret-backed examples."
+else
+  echo "1Password CLI is optional and not installed in this container."
+fi
+
+git config pull.rebase false && git config branch.autosetuprebase never
+
+if [[ -f /tmp/host-gitconfig ]]; then
+  host_git_user_name="$(git config --file /tmp/host-gitconfig --get user.name || true)"
+  host_git_user_email="$(git config --file /tmp/host-gitconfig --get user.email || true)"
+
+  if [[ -n "${host_git_user_name}" ]]; then
+    git config --local user.name "${host_git_user_name}"
+  fi
+  if [[ -n "${host_git_user_email}" ]]; then
+    git config --local user.email "${host_git_user_email}"
+  fi
+fi
+
+gh auth setup-git || true
+
+echo "For Windows contributors, keep this repo inside the WSL filesystem before reopening it in the container for the best bind-mount performance."

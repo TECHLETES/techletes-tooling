@@ -1,0 +1,27 @@
+# .github/workflows/template-sync.yml
+name: Sync full-stack template
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+jobs:
+  sync:
+    # This workflow is inherited by derived full-stack repositories.
+    # It must not run in the source template itself.
+    if: github.repository != 'TECHLETES/full-stack-template'
+
+    uses: TECHLETES/python_template/.github/workflows/reusable-template-sync.yml@main
+
+    with:
+      template_repository: TECHLETES/full-stack-template
+      template_branch: main
+      target_branch: staging
+      sync_branch: chore/template-sync
+      config_path: .template-sync.yml
+      pull_request_title: "chore: sync full-stack template"
+
+    secrets:
+      app_client_id: ${{ vars.TEMPLATE_SYNC_APP_CLIENT_ID }}
+      app_private_key: ${{ secrets.TEMPLATE_SYNC_APP_PRIVATE_KEY }}

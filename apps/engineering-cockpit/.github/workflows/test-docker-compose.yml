@@ -1,0 +1,38 @@
+name: Test Docker Compose
+
+on:
+  workflow_dispatch: {}
+  workflow_call:
+
+jobs:
+  test-docker-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.3
+      - name: Create .env file for CI
+        run: |
+          cp .env.template .env
+      - name: Create shared proxy network
+        run: docker network create applicatie-proxy || true
+      - run: docker compose build
+      - run: docker compose down -v --remove-orphans
+      - name: Start services with debugging
+        run: docker compose up -d --wait backend adminer
+        timeout-minutes: 5
+      - name: Check Docker Compose status
+        if: failure()
+        run: |
+          echo "=== Docker Compose PS ==="
+          docker compose ps -a
+          echo "=== Redis logs ==="
+          docker compose logs redis || true
+          echo "=== Database logs ==="
+          docker compose logs db || true
+          echo "=== Backend logs ==="
+          docker compose logs backend || true
+      - name: Test backend is up
+        run: docker compose exec backend curl -f http://localhost:8000/api/v1/utils/health-check/
+      - name: Test frontend is served from backend
+        run: docker compose exec backend curl -f http://localhost:8000
+      - run: docker compose down -v --remove-orphans

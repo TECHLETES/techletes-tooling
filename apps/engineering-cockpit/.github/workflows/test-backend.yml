@@ -1,0 +1,85 @@
+name: Test Backend
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: write
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping || exit 1"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      PROJECT_NAME: "Full Stack Template"
+      SECRET_KEY: "test-secret-key-for-ci-only" # pragma: allowlist secret
+      FRONTEND_HOST: "http://localhost:5173"
+      AZURE_TENANT_ID: "test-tenant-id"
+      POSTGRES_SERVER: "localhost"
+      POSTGRES_DB: "app"
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "testpassword"
+      REDIS_URL: "redis://localhost:6379"
+      FIRST_SUPERUSER: "admin@example.com"
+      FIRST_SUPERUSER_PASSWORD: "testpassword"
+      EMAILS_FROM_EMAIL: "test@example.com"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          version: "0.9.26"
+
+      - name: Run tests
+        run: uv run bash scripts/test.sh
+        working-directory: backend
+
+      - name: Store coverage html
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: coverage-html
+          path: backend/htmlcov
+          include-hidden-files: true
+
+      - name: Store coverage xml
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: coverage-xml
+          path: backend/coverage.xml
+
+      - name: Coverage report
+        run: uv run coverage report --fail-under=80
+        working-directory: backend
+
+      - name: Generate coverage badge
+        if: ${{github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'}}
+        run: uv run genbadge coverage -i backend/coverage.xml -o coverage.svg
+
+      - name: Commit badge
+        if: ${{github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'main'}}
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore: update coverage badge"
+          file_pattern: coverage.svg
