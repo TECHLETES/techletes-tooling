@@ -3,7 +3,7 @@
 import mimetypes
 import uuid
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter, HTTPException, UploadFile
 from fastapi.responses import Response
@@ -49,7 +49,7 @@ def read_users(session: SessionDep, skip: int = 0, limit: int = 100) -> Any:
 
     statement = (
         select(User)
-        .options(selectinload(User.roles))
+        .options(selectinload(cast(Any, User.roles)))
         .order_by(col(User.created_at).desc())
         .offset(skip)
         .limit(limit)
@@ -246,7 +246,9 @@ def read_user_by_id(
 ) -> Any:
     """Get a specific user by ID."""
     user = session.exec(
-        select(User).options(selectinload(User.roles)).where(User.id == user_id)
+        select(User)
+        .options(selectinload(cast(Any, User.roles)))
+        .where(User.id == user_id)
     ).first()
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")

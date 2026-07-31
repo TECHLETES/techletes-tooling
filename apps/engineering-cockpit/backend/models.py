@@ -68,7 +68,7 @@ class UpdatePassword(SQLModel):
 
 
 # Many-to-many junction tables (must be defined before table models that reference them)
-class RolePermission(SQLModel, table=True):  # type: ignore[call-arg]
+class RolePermission(SQLModel, table=True):
     """Association table linking roles and permissions."""
 
     role_id: uuid.UUID = Field(
@@ -79,7 +79,7 @@ class RolePermission(SQLModel, table=True):  # type: ignore[call-arg]
     )
 
 
-class UserRole(SQLModel, table=True):  # type: ignore[call-arg]
+class UserRole(SQLModel, table=True):
     """Association table linking users and roles."""
 
     user_id: uuid.UUID = Field(
@@ -91,14 +91,14 @@ class UserRole(SQLModel, table=True):  # type: ignore[call-arg]
 
 
 # Database model, database table inferred from class name
-class User(UserBase, table=True):  # type: ignore[call-arg]
+class User(UserBase, table=True):
     """Database model representing an application user."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str = Field(default="")
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     # Microsoft Entra fields
     azure_user_id: str | None = Field(default=None, index=True)
@@ -169,13 +169,13 @@ class MicrosoftTenantUpdate(SQLModel):
     auto_create_users: bool | None = None
 
 
-class MicrosoftTenant(MicrosoftTenantBase, table=True):  # type: ignore[call-arg]
+class MicrosoftTenant(MicrosoftTenantBase, table=True):
     """Database model for a Microsoft Entra tenant."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     created_by: uuid.UUID | None = Field(
         default=None, foreign_key="user.id", ondelete="SET NULL"
@@ -247,13 +247,13 @@ class RoleUpdate(SQLModel):
     entra_role_id: str | None = Field(default=None, max_length=255)
 
 
-class Permission(PermissionBase, table=True):  # type: ignore[call-arg]
+class Permission(PermissionBase, table=True):
     """Database model for a permission."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     roles: list["Role"] = Relationship(
         back_populates="permissions",
@@ -275,13 +275,13 @@ class PermissionsPublic(SQLModel):
     count: int
 
 
-class Role(RoleBase, table=True):  # type: ignore[call-arg]
+class Role(RoleBase, table=True):
     """Database model for RBAC roles."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     entra_role_id: str | None = Field(default=None, max_length=255, nullable=True)
     permissions: list[Permission] = Relationship(
@@ -339,7 +339,7 @@ class UserTenantRoleBase(SQLModel):
     roles: list[str] = Field(default_factory=list, sa_column=Column(JSON))
 
 
-class UserTenantRole(UserTenantRoleBase, table=True):  # type: ignore[call-arg]
+class UserTenantRole(UserTenantRoleBase, table=True):
     """Database model mapping users to roles within tenants."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -347,7 +347,7 @@ class UserTenantRole(UserTenantRoleBase, table=True):  # type: ignore[call-arg]
     tenant_id: uuid.UUID = Field(foreign_key="microsofttenant.id", ondelete="CASCADE")
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     user: User | None = Relationship(back_populates="tenant_roles")
     tenant: MicrosoftTenant | None = Relationship(back_populates="tenant_roles")
@@ -389,14 +389,14 @@ class FilesPublic(SQLModel):
     count: int
 
 
-class File(FileBase, table=True):  # type: ignore[call-arg]
+class File(FileBase, table=True):
     """Database model for a stored file."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     storage_key: str = Field(max_length=1024)  # path or S3 object key
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
@@ -430,7 +430,7 @@ class TaskCreate(TaskBase):
     kwargs: dict[str, Any] = Field(default_factory=dict)
 
 
-class Task(TaskBase, table=True):  # type: ignore[call-arg]
+class Task(TaskBase, table=True):
     """Database model for a background task."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
@@ -444,7 +444,7 @@ class Task(TaskBase, table=True):  # type: ignore[call-arg]
     )
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     started_at: datetime | None = Field(
         default=None,
@@ -558,13 +558,13 @@ class ItemUpdate(ItemBase):
 
 
 # Database model, database table inferred from class name
-class Item(ItemBase, table=True):  # type: ignore[call-arg]
+class Item(ItemBase, table=True):
     """Database model for an item."""
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime | None = Field(
         default_factory=get_datetime_utc,
-        sa_type=DateTime(timezone=True),
+        sa_column=Column(DateTime(timezone=True), nullable=True),
     )
     owner_id: uuid.UUID = Field(
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
