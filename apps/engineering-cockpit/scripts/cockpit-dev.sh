@@ -40,6 +40,19 @@ export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:${COCKPIT_REDIS_PORT:-56379}/0}
 grep -qi microsoft /proc/version
 
 bash scripts/cockpit-services-up.sh
+uv run python -c '
+import sys
+
+from backend.cockpit.runtime_instance import RuntimeInstanceAlreadyRunning
+from backend.cockpit.runtime_instance import RuntimeInstanceLock, runtime_lock_path
+
+try:
+    lock = RuntimeInstanceLock.acquire(runtime_lock_path())
+except RuntimeInstanceAlreadyRunning as exc:
+    print(f"Error: {exc}", file=sys.stderr)
+    raise SystemExit(1) from None
+lock.release()
+'
 cd backend
 uv run alembic upgrade head
 

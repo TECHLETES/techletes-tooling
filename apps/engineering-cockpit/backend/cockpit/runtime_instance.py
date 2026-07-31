@@ -12,6 +12,24 @@ from typing import Any, ClassVar
 APPLICATION_VERSION = "0.1.0"
 
 
+def default_runtime_lock_path() -> Path:
+    """Return the default path for the process ownership lock."""
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+    if runtime_dir:
+        return Path(runtime_dir) / "techletes-engineering-cockpit.lock"
+    return Path.home() / ".cache" / "techletes-engineering-cockpit" / "instance.lock"
+
+
+def runtime_lock_path() -> Path:
+    """Return the configured or default path for the process ownership lock."""
+    configured_lock_path = os.environ.get("COCKPIT_INSTANCE_LOCK_PATH")
+    return (
+        Path(configured_lock_path)
+        if configured_lock_path
+        else default_runtime_lock_path()
+    )
+
+
 class RuntimeInstanceAlreadyRunning(RuntimeError):
     """Raised when another process owns the cockpit runtime lock."""
 
