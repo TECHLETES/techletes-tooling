@@ -19,9 +19,7 @@ class RuntimeInstanceAlreadyRunning(RuntimeError):
         self.path = path
         self.metadata = metadata or {}
         pid = self.metadata.get("pid", "unknown")
-        super().__init__(
-            f"control plane already running (lock: {path}, pid: {pid})"
-        )
+        super().__init__(f"control plane already running (lock: {path}, pid: {pid})")
 
 
 class RuntimeInstanceLock:
