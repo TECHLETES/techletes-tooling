@@ -9,7 +9,7 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify tests → Detect environment → Present options → Execute choice → Clean up.
+**Core principle:** Verify tests → Detect environment → Determine actual delivery base → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -54,14 +54,33 @@ This determines which menu to show and how cleanup works:
 | `GIT_DIR != GIT_COMMON`, named branch | Standard 4 options | Provenance-based (see Step 6) |
 | `GIT_DIR != GIT_COMMON`, detached HEAD | Reduced 3 options (no merge) | No cleanup (externally managed) |
 
-### Step 3: Determine Base Branch
+### Step 3: Determine PR Base
+
+Do not assume `main` or infer the base only from branch ancestry. Determine the intended delivery base from the plan and GitHub state.
+
+1. If the implementation plan has a `Delivery` section, use its planned PR base.
+2. If the branch already has an open PR, use the PR's actual base:
 
 ```bash
-# Try common base branches
-git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
+BASE_BRANCH=$(gh pr view --json baseRefName --jq .baseRefName)
 ```
 
-Or ask: "This branch split from main - is that correct?"
+3. If the current issue depends on an open PR whose branch contains required code, use that direct parent feature branch as the base for a stacked PR.
+4. Otherwise use `staging` as the Techletes default, unless the repository explicitly documents another integration branch.
+
+Validate the chosen base exists:
+
+```bash
+git fetch origin
+
+git rev-parse --verify "origin/$BASE_BRANCH"
+```
+
+For a stacked PR, confirm the relationship with GitHub instead of guessing from branch names:
+
+```bash
+gh pr view <parent-pr> --json number,headRefName,baseRefName,state
+```
 
 ### Step 4: Present Options
 
@@ -124,6 +143,50 @@ git branch -d <feature-branch>
 # Push branch
 git push -u origin <feature-branch>
 ```
+
+Create the PR against the base determined in Step 3:
+
+```bash
+gh pr create --base "$BASE_BRANCH" --head <feature-branch> ...
+```
+
+For a stacked PR, include concise dependency metadata in the PR body:
+
+```text
+Stacked on #<parent-pr>.
+
+Review this PR against `<parent-feature-branch>`.
+Merge #<parent-pr> first, then retarget/restack this PR to `staging`.
+```
+
+Do not target `staging` directly while the child still depends on an unmerged parent PR; doing so makes the child diff include the parent work.
+
+While both parent and child PRs are open and actively reviewed, prefer merging parent branch updates into the child branch:
+
+```bash
+git checkout <child-branch>
+git merge origin/<parent-feature-branch>
+git push
+```
+
+Avoid repeatedly rebasing an already-reviewed child just to pick up parent changes, because that rewrites commit SHAs and makes GitHub review history noisy.
+
+After the parent PR merges, move the child onto the integration branch. If the parent was merged without rewriting commits, retargeting may be sufficient. If the parent was squash-merged, replay only child-specific commits:
+
+```bash
+git fetch origin
+git checkout <child-branch>
+git rebase --onto origin/staging <parent-feature-branch> <child-branch>
+git push --force-with-lease
+```
+
+Then retarget the PR to `staging`:
+
+```bash
+gh pr edit --base staging
+```
+
+Use `--force-with-lease`, never plain `--force`, and only for this deliberate post-parent restack or when the user explicitly requests a history rewrite.
 
 **Do NOT clean up worktree** — user needs it alive to iterate on PR feedback.
 
@@ -192,6 +255,18 @@ git worktree prune  # Self-healing: clean up any stale registrations
 
 ## Common Mistakes
 
+**Assuming main/master is the base**
+- **Problem:** Techletes feature work normally targets `staging`, and stacked PRs target their direct parent feature branch
+- **Fix:** Read the plan/GitHub PR state and determine the actual base before merging, reviewing, or opening a PR
+
+**Targeting staging for a dependent child PR**
+- **Problem:** The child PR includes the still-unmerged parent diff
+- **Fix:** Target the direct parent feature branch until the parent PR is merged
+
+**Rebasing an active reviewed stack for every parent update**
+- **Problem:** Rewrites child commit SHAs and creates noisy review history
+- **Fix:** Merge parent updates into the child while both PRs remain open; restack only after the parent merges or when otherwise necessary
+
 **Skipping test verification**
 - **Problem:** Merge broken code, create failing PR
 - **Fix:** Always verify tests before offering options
@@ -226,7 +301,7 @@ git worktree prune  # Self-healing: clean up any stale registrations
 - Proceed with failing tests
 - Merge without verifying tests on result
 - Delete work without confirmation
-- Force-push without explicit request
+- Force-push except a deliberate post-parent stacked-PR restack using `--force-with-lease`, or when explicitly requested
 - Remove a worktree before confirming merge success
 - Clean up worktrees you didn't create (provenance check)
 - Run `git worktree remove` from inside the worktree
@@ -234,6 +309,9 @@ git worktree prune  # Self-healing: clean up any stale registrations
 **Always:**
 - Verify tests before offering options
 - Detect environment before presenting menu
+- Determine the real PR base from plan/GitHub state; default to `staging`, not `main`
+- Target the direct parent branch for dependent stacked PRs
+- Merge stacked PRs bottom-up
 - Present exactly 4 options (or 3 for detached HEAD)
 - Get typed confirmation for Option 4
 - Clean up worktree for Options 1 & 4 only

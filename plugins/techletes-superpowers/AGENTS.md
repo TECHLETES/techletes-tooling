@@ -111,6 +111,33 @@ Examples:
 
 Do not guess issue or PR context from branch names alone if `gh` can retrieve the source of truth.
 
+### Pull Request Boundaries and Stacks
+
+Prefer one pull request per issue or independently reviewable logical change. Do not combine multiple issues into one PR merely because their implementation overlaps.
+
+The normal Techletes development target is `staging` unless the repository explicitly documents a different integration branch.
+
+If issue B depends on code from an open PR for issue A and work on B should start before A is merged, create B as a stacked PR on the branch for A:
+
+```text
+staging
+└── feature/issue-a      ← PR A targets staging
+    └── feature/issue-b  ← PR B targets feature/issue-a
+```
+
+For stacked PRs:
+
+* target the direct parent feature branch, not `staging`;
+* keep each PR limited to its own issue/logical change;
+* state the parent PR/branch in the child PR description;
+* review the child against its actual parent branch so parent changes are not reviewed twice;
+* merge bottom-up: parent first, child second;
+* while both PRs are open and under review, prefer merging parent-branch updates into the child instead of rebasing and rewriting the child history;
+* after the parent PR is merged, retarget the child to `staging` and restack/rebase only the child-specific commits when needed;
+* when the parent was squash-merged, use an explicit `rebase --onto` (or equivalent) so the parent commits are not replayed into the child PR.
+
+A stacked PR is a dependency strategy, not permission to put multiple issues into one PR.
+
 ## Superpowers Workflow
 
 For non-trivial work, use the Techletes Superpowers workflow.

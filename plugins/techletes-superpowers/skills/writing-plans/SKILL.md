@@ -9,7 +9,7 @@ description: Use when requirements describe multiple dependent implementation st
 
 Write implementation plans for work where sequencing and coordination reduce risk. Keep the plan proportional to the task; a plan is not required for a one-file, one-command, or otherwise obvious change.
 
-Document the files, interfaces, tests, and commands that another engineer needs. DRY. YAGNI. TDD where the behavior warrants it.
+Document the files, interfaces, tests, delivery boundaries, and commands that another engineer needs. DRY. YAGNI. TDD where the behavior warrants it.
 
 Assume they are a skilled developer, but know almost nothing about our toolset or problem domain. Assume they don't know good test design very well.
 
@@ -23,6 +23,31 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 ## Scope Check
 
 If the requirements cover multiple independent subsystems, split them only when doing so improves delivery or review. Do not create a spec/plan decomposition for a small cohesive change.
+
+Before finalizing the plan, determine whether the requested work spans multiple GitHub issues or independently reviewable deliverables. Prefer one PR per issue/logical change.
+
+If issue B depends on code from issue A and work on B should start before A is merged, plan B as a stacked branch/PR on top of A instead of combining both issues into one PR.
+
+## Delivery Planning
+
+For GitHub-backed work, include an explicit `Delivery` section before the task list whenever the work spans multiple issues or PRs. Record the intended branch and PR base for each independently reviewable unit.
+
+Use `staging` as the default Techletes PR base unless the repository explicitly documents another integration branch. For dependent work, target the direct parent feature branch.
+
+Example:
+
+```markdown
+## Delivery
+
+- Issue #90 → `feature/90-export-approval` → PR to `staging`
+- Issue #71 → `feature/71-export-workflow` → stacked PR to `feature/90-export-approval` (#190)
+
+Merge order: #190 first, then restack/retarget #191 to `staging` and merge #191.
+```
+
+Do not use stacking to hide multiple issues inside one PR. Each stacked PR must still be independently understandable and reviewable relative to its parent branch.
+
+While a stack is under active review, plan parent updates to be merged into the child branch rather than repeatedly rebasing and rewriting reviewed child commits. After the parent merges, plan the child restack onto `staging`; if the parent was squash-merged, use `git rebase --onto` (or an equivalent operation) so only child-specific commits are replayed.
 
 ## File Structure
 
@@ -142,6 +167,7 @@ Every step must contain the actual content an engineer needs. These are **plan f
 - Complete code in every step — if a step changes code, show the code
 - Exact commands with expected output
 - DRY, YAGNI, TDD, frequent commits
+- Explicit PR/branch boundaries when multiple issues or dependent deliverables are involved
 
 ## Self-Review
 
@@ -152,6 +178,8 @@ After writing the complete plan, look at the spec with fresh eyes and check the 
 **2. Placeholder scan:** Search your plan for red flags — any of the patterns from the "No Placeholders" section above. Fix them.
 
 **3. Type consistency:** Do the types, method signatures, and property names you used in later tasks match what you defined in earlier tasks? A function called `clearLayers()` in Task 3 but `clearFullLayers()` in Task 7 is a bug.
+
+**4. Delivery boundaries:** If multiple issues or independently reviewable units are involved, verify that each maps to its own PR and that dependent PR bases and merge order are explicit.
 
 If you find issues, fix them inline. No need to re-review — just fix and move on. If you find a spec requirement with no task, add the task.
 
