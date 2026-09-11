@@ -14,7 +14,7 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 **Mandatory:**
 - After each task in subagent-driven development
 - After completing major feature
-- Before merge to main
+- Before merge to the integration branch
 
 **Optional but valuable:**
 - When stuck (fresh perspective)
@@ -23,11 +23,29 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 
 ## How to Request
 
-**1. Get git SHAs:**
+**1. Determine the actual review base and get git SHAs:**
+
+If the branch already has a PR, derive the review base from GitHub instead of assuming `main` or `HEAD~1`:
+
 ```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+BASE_BRANCH=$(gh pr view --json baseRefName --jq .baseRefName)
+git fetch origin "$BASE_BRANCH"
+BASE_SHA=$(git merge-base HEAD "origin/$BASE_BRANCH")
 HEAD_SHA=$(git rev-parse HEAD)
 ```
+
+This is required for stacked PRs. For example:
+
+```text
+#190: staging...feature/90-export-approval
+#191: feature/90-export-approval...feature/71-export-workflow
+```
+
+Review #191 against `feature/90-export-approval`, not against `staging`, so #190 changes are not reviewed twice.
+
+If the PR does not exist yet, use the PR base recorded in the implementation plan's `Delivery` section. If no planned base exists, use `staging` as the Techletes default unless the repository explicitly documents another integration branch.
+
+For a task-level review that intentionally covers only the most recent task rather than the complete PR, use the task's starting commit as `BASE_SHA`. Do not substitute `HEAD~1` when the task spans multiple commits.
 
 **2. Dispatch code reviewer subagent:**
 
@@ -87,10 +105,18 @@ You: [Fix progress indicators]
 - Review before merge
 - Review when stuck
 
+**Stacked PRs:**
+- Read the actual `baseRefName` from the PR
+- Review only the child-specific diff against its direct parent branch
+- Do not report findings on unchanged parent code as child-PR findings
+- After the parent is merged and the child is restacked/retargeted, recompute the base before re-reviewing
+
 ## Red Flags
 
 **Never:**
 - Skip review because "it's simple"
+- Assume `origin/main` is the PR review base
+- Review a stacked child against `staging` while its parent PR is still open
 - Ignore Critical issues
 - Proceed with unfixed Important issues
 - Argue with valid technical feedback
