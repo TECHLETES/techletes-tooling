@@ -47,7 +47,7 @@ The shared image intentionally carries the full common Techletes editor baseline
 
 JavaScript, JSX, TypeScript, and TSX use the same Biome-on-save defaults as the current Techletes full-stack template, with `biome.requireConfiguration` enabled so repositories are expected to opt in through their committed Biome configuration. Python keeps Black as formatter and Ruff for fixes/import organization.
 
-Consuming repositories can still add extensions and override settings locally. The goal is that a normal Techletes full-stack repository does not need to repeat the standard extension list.
+Consuming repositories can still add extensions and override settings locally. The goal is that a normal Techletes full-stack repository does not need to repeat the standard extension list. Keeping the complete extension baseline in the image is deliberate: a Python-only repository may inherit a few unused editor extensions, but this is preferable to reintroducing duplicated extension manifests in every full-stack repository.
 
 ## Boundaries
 
