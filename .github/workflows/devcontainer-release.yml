@@ -38,6 +38,7 @@ jobs:
         run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
 
       - name: Restore BuildKit cache
+        id: buildx-cache
         uses: actions/cache@v4
         with:
           path: ${{ env.BUILDX_CACHE_DIR }}
@@ -47,14 +48,17 @@ jobs:
 
       - name: Build validation image
         shell: bash
+        env:
+          BUILDX_CACHE_HIT: ${{ steps.buildx-cache.outputs.cache-hit }}
         run: |
           set -euo pipefail
 
-          cache_args=(
-            --cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max"
-          )
+          cache_args=()
           if [[ -f "${BUILDX_CACHE_DIR}/index.json" ]]; then
             cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}")
+          fi
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            cache_args+=(--cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max")
           fi
 
           devcontainer build \
@@ -63,8 +67,10 @@ jobs:
             --image-name techletes-devcontainer:release-check \
             "${cache_args[@]}"
 
-          rm -rf "${BUILDX_CACHE_DIR}"
-          mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            rm -rf "${BUILDX_CACHE_DIR}"
+            mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
+          fi
 
       - name: Verify shared toolchain
         run: |
@@ -113,6 +119,7 @@ jobs:
         run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
 
       - name: Restore multi-platform BuildKit cache
+        id: buildx-cache
         uses: actions/cache@v4
         with:
           path: ${{ env.BUILDX_CACHE_DIR }}
@@ -171,6 +178,7 @@ jobs:
         shell: bash
         env:
           IMAGE_NAMES: ${{ steps.tags.outputs.names }}
+          BUILDX_CACHE_HIT: ${{ steps.buildx-cache.outputs.cache-hit }}
         run: |
           set -euo pipefail
 
@@ -179,14 +187,15 @@ jobs:
             [[ -z "${image_name}" ]] || image_args+=(--image-name "${image_name}")
           done <<<"${IMAGE_NAMES}"
 
-          cache_args=(
-            --cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max"
-          )
+          cache_args=()
           if [[ -f "${BUILDX_CACHE_DIR}/index.json" ]]; then
             cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}")
           fi
           if [[ -f "${BUILDX_CACHE_DIR}-amd64/index.json" ]]; then
             cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}-amd64")
+          fi
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            cache_args+=(--cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max")
           fi
 
           devcontainer build \
@@ -196,5 +205,7 @@ jobs:
             "${image_args[@]}" \
             "${cache_args[@]}"
 
-          rm -rf "${BUILDX_CACHE_DIR}"
-          mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            rm -rf "${BUILDX_CACHE_DIR}"
+            mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
+          fi
