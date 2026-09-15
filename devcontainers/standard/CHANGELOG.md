@@ -19,3 +19,5 @@ Initial shared Techletes development image.
 - Shared Dev Container metadata for the `vscode` user, cache volumes, Python/editor defaults, and the Techletes full-stack VS Code baseline.
 - Full-stack editor baseline includes Jupyter, Biome, ESLint, Tailwind CSS, Playwright, SQLTools with MySQL/PostgreSQL/SQLite drivers, Microsoft PostgreSQL tooling, Office viewing, Caddyfile support, Docker tooling, GitHub tooling, and Codex/ChatGPT.
 - Persistent shared caches for uv, pre-commit, and Bun.
+- Build layers isolate independently versioned tools, with Codex installed late so Codex-only updates can reuse the expensive shared layers.
+- GitHub Actions persists a BuildKit `mode=max` cache across devcontainer checks and between release validation/publish jobs.
