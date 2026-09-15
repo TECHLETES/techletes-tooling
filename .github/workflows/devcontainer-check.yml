@@ -15,6 +15,10 @@ concurrency:
   group: devcontainer-check-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  DEVCONTAINER_CLI_VERSION: 0.89.0
+  BUILDX_CACHE_DIR: /tmp/.buildx-cache
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -26,14 +30,37 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install Dev Container CLI
-        run: npm install --global @devcontainers/cli@0.89.0
+        run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
+
+      - name: Restore BuildKit cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BUILDX_CACHE_DIR }}
+          key: devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-${{ github.run_id }}-check
+          restore-keys: |
+            devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-
+            devcontainer-buildx-${{ runner.os }}-
 
       - name: Build shared devcontainer
+        shell: bash
         run: |
+          set -euo pipefail
+
+          cache_args=(
+            --cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max"
+          )
+          if [[ -f "${BUILDX_CACHE_DIR}/index.json" ]]; then
+            cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}")
+          fi
+
           devcontainer build \
             --workspace-folder devcontainers/standard \
             --platform linux/amd64 \
-            --image-name techletes-devcontainer:test
+            --image-name techletes-devcontainer:test \
+            "${cache_args[@]}"
+
+          rm -rf "${BUILDX_CACHE_DIR}"
+          mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
 
       - name: Verify shared toolchain
         run: |
