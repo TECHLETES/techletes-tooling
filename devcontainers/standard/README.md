@@ -119,6 +119,8 @@ Repository configuration is merged with the metadata embedded in the prebuilt im
 
 The shared image already includes the normal Python and full-stack editor stack. Repositories should add only genuine exceptions, for example a framework-specific extension, a nonstandard language toolchain, or a project-specific database/client integration not already covered by the shared baseline.
 
+If a repository intentionally uses a different JavaScript formatter/linter strategy, it should override the relevant language settings locally rather than remove the shared extensions. Extensions are cheap to inherit; conflicting editor behavior should be resolved explicitly in repository settings.
+
 ## Project bootstrap
 
 Project dependencies remain locked by each project. A typical `post-create.sh` should do roughly:
