@@ -21,3 +21,4 @@ Initial shared Techletes development image.
 - Persistent shared caches for uv, pre-commit, and Bun.
 - Build layers isolate independently versioned tools, with Codex installed late so Codex-only updates can reuse the expensive shared layers.
 - GitHub Actions persists a BuildKit `mode=max` cache across devcontainer checks and between release validation/publish jobs.
+- Successful publishes trigger GHCR retention cleanup that keeps the three newest top-level devcontainer images while preserving required multi-architecture child manifests.
