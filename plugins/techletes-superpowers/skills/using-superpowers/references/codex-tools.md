@@ -1,39 +1,40 @@
-## Subagent dispatch requires multi-agent support
+# Codex tool adaptation
 
-Add to your Codex config (`~/.codex/config.toml`):
+Use the tools exposed by the installed client; do not invent dispatch arguments
+or assume a tool name from another harness. Current Codex supports standalone
+custom-agent TOML files. See [native role setup](../../../codex/README.md) and
+[shared routing](../../subagent-driven-development/references/model-routing.md).
 
-```toml
-[features]
-multi_agent = true
-```
+The plugin's legacy `agents/*.agent.md` files are not native Codex configuration.
+Installing skills alone does not install the TOML roles or global AGENTS.md.
+Set both `model` and `model_reasoning_effort` in each native role; choose the
+matching installed role at dispatch instead of relying on inherited defaults.
+Confirm effective settings when session metadata exposes them.
 
-This enables `spawn_agent`, `wait_agent`, and `close_agent` for skills like `dispatching-parallel-agents` and `subagent-driven-development`. When using subagent-driven-development, you should always close implementer and reviewer subagents when they have finished all their work.
+Current configuration uses `[agents] enabled = true` (default). Older clients
+may use `[features] multi_agent = true`; verify the installed version and tool
+availability rather than claiming an unsupported toggle enabled delegation.
+Keep workers alive for focused corrections, then close completed child threads.
+Do not let delegation change the existing sandbox or approval policy.
 
-## Environment Detection
+## Environment and delivery
 
-Skills that create worktrees or finish branches should detect their
-environment with read-only git commands before proceeding:
+Inspect Git state before creating or cleaning up a workspace:
 
 ```bash
-GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
-GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
+GIT_DIR=$(cd "$(git rev-parse --git-dir)" && pwd -P)
+GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" && pwd -P)
 BRANCH=$(git branch --show-current)
 ```
 
-- `GIT_DIR != GIT_COMMON` → already in a linked worktree (skip creation)
-- `BRANCH` empty → detached HEAD (cannot branch/push/PR from sandbox)
+Different Git/common directories identify a linked worktree. A blank branch
+means detached HEAD, not proof that every branch/push operation is forbidden.
+Use actual errors and host constraints to determine permitted delivery.
 
-See `using-git-worktrees` Step 0 and `finishing-a-development-branch`
-Step 1 for how each skill uses these signals.
+Reuse an existing workspace for sequential work. Never remove a host-managed
+worktree or infer ownership solely from its directory name. If the host blocks
+branch/push/PR operations, preserve verified commits and provide the supported
+native handoff action. Do not claim the PR was created when it was not.
 
-## Codex App Finishing
-
-When the sandbox blocks branch/push operations (detached HEAD in an
-externally managed worktree), the agent commits all work and informs
-the user to use the App's native controls:
-
-- **"Create branch"** — names the branch, then commit/push/PR via App UI
-- **"Hand off to local"** — transfers work to the user's local checkout
-
-The agent can still run tests, stage files, and output suggested branch
-names, commit messages, and PR descriptions for the user to copy.
+Reference: [official Codex subagent documentation](https://developers.openai.com/codex/subagents),
+checked 2026-09-15. Runtime model access and permissions still need a local smoke test.

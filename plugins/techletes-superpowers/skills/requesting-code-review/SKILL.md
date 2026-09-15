@@ -1,31 +1,25 @@
 ---
 name: requesting-code-review
-description: Use when completing tasks, implementing major features, or before merging to verify work meets requirements
+description: Review substantive changes, consequential milestones, or final branches independently against requirements, surrounding code, integration risks, and revision-matched validation evidence.
 ---
 
 # Requesting Code Review
 
-Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
+Use [model-routing.md](../subagent-driven-development/references/model-routing.md):
+Terra high for normal independent review, Sol high for consequential security,
+data-loss, migrations, or cross-cutting changes. Do not inherit a Luna worker's
+configuration. Use a fresh context rather than the implementation thread.
 
-**Core principle:** Review early, review often.
+Review coherent deliverables, not every mechanical edit. A parent can review a
+routine low-risk task; record that honestly. Require independent review for
+substantive/risky milestones and before substantial final delivery. Do not run
+an identical second review when the exact revision, requirements, and whole-branch
+scope were already independently covered. Small ad-hoc changes need proportionate
+verification, not an obligatory agent hierarchy.
 
-## When to Request Review
+## Determine the actual range
 
-**Mandatory:**
-- After each task in subagent-driven development
-- After completing major feature
-- Before merge to the integration branch
-
-**Optional but valuable:**
-- When stuck (fresh perspective)
-- Before refactoring (baseline check)
-- After fixing complex bug
-
-## How to Request
-
-**1. Determine the actual review base and get git SHAs:**
-
-If the branch already has a PR, derive the review base from GitHub instead of assuming `main` or `HEAD~1`:
+For an existing PR, inspect its actual base instead of assuming main or staging:
 
 ```bash
 BASE_BRANCH=$(gh pr view --json baseRefName --jq .baseRefName)
@@ -34,96 +28,37 @@ BASE_SHA=$(git merge-base HEAD "origin/$BASE_BRANCH")
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
-This is required for stacked PRs. For example:
+Without a PR, use the explicitly requested/planned base, then repository policy
+(Techletes default: staging). For a stacked child, review against its direct
+parent feature branch so parent changes are not reviewed twice. Recompute the
+base after a restack/retarget. If a requested base conflicts with an existing PR,
+resolve that discrepancy explicitly; do not silently retarget it.
 
-```text
-#190: staging...feature/90-export-approval
-#191: feature/90-export-approval...feature/71-export-workflow
-```
+For task review, use the commit recorded before that task, not HEAD~1 or a guessed
+log entry. Generate a package with the subagent-driven-development skill's
+`scripts/review-package BASE_SHA HEAD_SHA`. Check for dirty/untracked changes:
+a committed-range package does not include them.
 
-Review #191 against `feature/90-export-approval`, not against `staging`, so #190 changes are not reviewed twice.
+## Dispatch and act
 
-If the PR does not exist yet, use the PR base recorded in the implementation plan's `Delivery` section. If no planned base exists, use `staging` as the Techletes default unless the repository explicitly documents another integration branch.
+Use [code-reviewer.md](code-reviewer.md) for whole-branch review, or the
+[subagent task reviewer](../subagent-driven-development/task-reviewer-prompt.md)
+for a bounded task. Supply requirements, constraints, package, exact revisions,
+relevant interfaces, test-report path, and unresolved earlier findings. Keep the
+implementation narrative separate from requirements and ask for requirements/
+diff-first assessment. Do not repeat full repository exploration.
 
-For a task-level review that intentionally covers only the most recent task rather than the complete PR, use the task's starting commit as `BASE_SHA`. Do not substitute `HEAD~1` when the task spans multiple commits.
+Reviewers can inspect complete functions, callers, and unchanged code to resolve
+concrete risks. Reuse validation only when its revision, environment, and scope
+match; missing/stale evidence needs a focused check, not automatic trust. Do not
+modify shared state or widen permissions to reproduce a finding.
 
-**2. Dispatch code reviewer subagent:**
+Resolve Critical/Important issues before acceptance. Send consolidated findings
+to the existing worker when suitable; run covering tests and re-review fixes.
+Track Minor findings through final disposition, rather than silently dropping
+them. Evaluate disputed findings against source and tests, not the author's
+confidence. Surface plan-mandated defects as decisions to resolve.
 
-Dispatch a `general-purpose` subagent, filling the template at [code-reviewer.md](code-reviewer.md)
-
-**Placeholders:**
-- `{DESCRIPTION}` - Brief summary of what you built
-- `{PLAN_OR_REQUIREMENTS}` - What it should do
-- `{BASE_SHA}` - Starting commit
-- `{HEAD_SHA}` - Ending commit
-
-**3. Act on feedback:**
-- Fix Critical issues immediately
-- Fix Important issues before proceeding
-- Note Minor issues for later
-- Push back if reviewer is wrong (with reasoning)
-
-## Example
-
-```
-[Just completed Task 2: Add verification function]
-
-You: Let me request code review before proceeding.
-
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
-HEAD_SHA=$(git rev-parse HEAD)
-
-[Dispatch code reviewer subagent]
-  DESCRIPTION: Added verifyIndex() and repairIndex() with 4 issue types
-  PLAN_OR_REQUIREMENTS: Task 2 from docs/superpowers/plans/deployment-plan.md
-  BASE_SHA: a7981ec
-  HEAD_SHA: 3df7661
-
-[Subagent returns]:
-  Strengths: Clean architecture, real tests
-  Issues:
-    Important: Missing progress indicators
-    Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
-
-You: [Fix progress indicators]
-[Continue to Task 3]
-```
-
-## Integration with Workflows
-
-**Subagent-Driven Development:**
-- Review after EACH task
-- Catch issues before they compound
-- Fix before moving to next task
-
-**Executing Plans:**
-- Review after each task or at natural checkpoints
-- Get feedback, apply, continue
-
-**Ad-Hoc Development:**
-- Review before merge
-- Review when stuck
-
-**Stacked PRs:**
-- Read the actual `baseRefName` from the PR
-- Review only the child-specific diff against its direct parent branch
-- Do not report findings on unchanged parent code as child-PR findings
-- After the parent is merged and the child is restacked/retargeted, recompute the base before re-reviewing
-
-## Red Flags
-
-**Never:**
-- Skip review because "it's simple"
-- Assume `origin/main` is the PR review base
-- Review a stacked child against `staging` while its parent PR is still open
-- Ignore Critical issues
-- Proceed with unfixed Important issues
-- Argue with valid technical feedback
-
-**If reviewer wrong:**
-- Push back with technical reasoning
-- Show code/tests that prove it works
-- Request clarification
-
-See template at: [code-reviewer.md](code-reviewer.md)
+Report spec and quality verdicts, evidence-backed findings, checks actually
+performed, and limitations. No model, test, or independent-review claims without
+observable evidence. A clean verdict is not approval to merge.
