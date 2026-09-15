@@ -196,6 +196,16 @@ A validated shared-image change merged to `main` publishes both `edge` and `late
 
 Breaking changes to language/runtime majors, removal of a shared tool, or incompatible metadata behavior require a major version bump. Normal tool upgrades use minor releases; fixes use patch releases.
 
+## Build caching
+
+The Dockerfile keeps independently versioned tools in separate layers and places Codex as the final root-owned install layer. With a warm BuildKit cache, changing only `CODEX_VERSION` can therefore reuse the base OS, database clients, 1Password, Node, Bun, uv, and shared setup layers; only the Codex install and final metadata need rebuilding.
+
+GitHub Actions persists the BuildKit cache between devcontainer workflow runs with `actions/cache`. The cache key tracks the files that affect the image build (`Dockerfile`, `.dockerignore`, `.devcontainer/`, and `scripts/`) and falls back to the latest compatible Linux cache when the exact source state is new. Each build exports a fresh `mode=max` local BuildKit cache so intermediate feature/image layers remain reusable.
+
+The release workflow also shares this cache between its jobs: the amd64 validation build warms the cache first, then the multi-platform publish job restores it. The publish job still has to build architecture-specific arm64 layers that are not already cached.
+
+The cache is an optimization only. A cold or evicted cache must still produce the same validated image, and release correctness must never depend on a prior cached layer existing.
+
 ## CI and release
 
 Pull requests changing the shared image run `.github/workflows/devcontainer-check.yml`. It builds through Dev Container CLI 0.89.0 so Features are actually preinstalled and their metadata is embedded in the resulting image. CI then verifies the expected toolchain and `devcontainer.metadata` label, including representative full-stack extensions.
