@@ -65,20 +65,30 @@ Credentials must remain explicit at repository/user level. Do not add credential
 
 ## Consuming the image
 
-### Single-container repository
+### Floating current stable
 
-After the first stable image release, a small repository configuration can look like:
+Repositories that intentionally follow the newest stable Techletes environment can use:
 
 ```json
 {
   "name": "My Techletes project",
-  "image": "ghcr.io/techletes/devcontainer:1.0.0",
+  "image": "ghcr.io/techletes/devcontainer:latest",
   "postCreateCommand": "bash .devcontainer/post-create.sh",
   "waitFor": "postCreateCommand"
 }
 ```
 
-Use an exact release rather than `edge` for normal development. For maximum reproducibility, append the published digest after the first pull:
+`latest` is updated only by a stable `devcontainer-vX.Y.Z` release. Pushes to `main` publish `edge`, not `latest`.
+
+### Exact version
+
+Repositories that need controlled rollout can pin an exact release:
+
+```text
+ghcr.io/techletes/devcontainer:1.0.0
+```
+
+For maximum reproducibility, append the published digest after the first pull:
 
 ```text
 ghcr.io/techletes/devcontainer:1.0.0@sha256:<digest>
@@ -91,7 +101,7 @@ Replace the duplicated app image build in `.devcontainer/docker-compose.yml`:
 ```yaml
 services:
   app:
-    image: ghcr.io/techletes/devcontainer:1.0.0
+    image: ghcr.io/techletes/devcontainer:latest
     volumes:
       - ..:/workspaces/app:cached
 ```
@@ -173,15 +183,16 @@ Image releases use tags prefixed with `devcontainer-v` in this repository:
 devcontainer-v1.0.0
 ```
 
-A release publishes:
+A stable release publishes:
 
 ```text
 ghcr.io/techletes/devcontainer:1.0.0
 ghcr.io/techletes/devcontainer:1.0
 ghcr.io/techletes/devcontainer:1
+ghcr.io/techletes/devcontainer:latest
 ```
 
-The exact semantic version is immutable by policy. Major/minor aliases are convenience pointers. `edge` is rebuilt from `main` and is only for validation/early adoption.
+The exact semantic version is immutable by policy. Major/minor aliases and `latest` are convenience pointers. `latest` means the newest explicitly released stable image; `edge` is rebuilt from `main` and is only for validation/early adoption.
 
 Breaking changes to language/runtime majors, removal of a shared tool, or incompatible metadata behavior require a major version bump. Normal tool upgrades use minor releases; fixes use patch releases.
 
@@ -189,7 +200,7 @@ Breaking changes to language/runtime majors, removal of a shared tool, or incomp
 
 Pull requests changing the shared image run `.github/workflows/devcontainer-check.yml`. It builds through Dev Container CLI 0.89.0 so Features are actually preinstalled and their metadata is embedded in the resulting image. CI then verifies the expected toolchain and `devcontainer.metadata` label, including representative full-stack extensions.
 
-`.github/workflows/devcontainer-release.yml` validates first and publishes multi-platform `linux/amd64` + `linux/arm64` images. Pushes to `main` publish `edge`; a `devcontainer-vX.Y.Z` tag publishes stable semantic tags. Stable tags refuse to overwrite an existing exact version.
+`.github/workflows/devcontainer-release.yml` validates first and publishes multi-platform `linux/amd64` + `linux/arm64` images. Pushes to `main` publish `edge`; a `devcontainer-vX.Y.Z` tag publishes the exact stable version, major/minor aliases, and `latest`. Exact stable version tags refuse overwrite.
 
 The first GHCR package publication may require a one-time package visibility decision in GitHub. Make the package public if anonymous pulls are required. If the package remains private, developers must authenticate Docker to GHCR before VS Code can pull the devcontainer image.
 
@@ -199,7 +210,7 @@ The first GHCR package publication may require a one-time package visibility dec
 2. Update `CHANGELOG.md`.
 3. Let the PR image checks pass.
 4. Merge to `main` and validate the automatically published `edge` image.
-5. Create a `devcontainer-vX.Y.Z` tag from the tested `main` commit.
-6. Migrate repositories with normal PRs; use exact versions and optionally a digest.
+5. Create a `devcontainer-vX.Y.Z` tag from the tested `main` commit; this promotes the release to the semantic aliases and `latest`.
+6. Rebuild repositories following `latest`, or migrate exact-version consumers with normal PRs.
 
 Do not modify an existing exact semantic tag.
