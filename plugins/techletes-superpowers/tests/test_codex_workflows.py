@@ -92,9 +92,9 @@ class InstallerTests(unittest.TestCase):
     def test_invalid_bundle_is_rejected_before_writes(self):
         source = self.root / "source"
         shutil.copytree(ROLES, source)
-        (source / "techletes-worker.toml").write_text("not valid toml")
+        (source / "techletes-worker.toml").write_text('name = "techletes-worker"\n')
         with self.assertRaises(ValueError):
-            INSTALLER.install(ROLES, self.dest)
+            INSTALLER.install(source, self.dest)
         self.assertFalse(self.dest.exists())
 
     def test_symlink_target_is_not_followed(self):
