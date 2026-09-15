@@ -43,6 +43,37 @@ Specify dependencies and interfaces, not just filenames. Different files can
 still share contracts or mutable resources. Default to sequential writers;
 justify any parallel implementation and its isolated worktrees/resources.
 
+## Plan completeness guardrails
+
+A plan should remove implementation ambiguity without becoming a second copy of
+the code. These are plan failures unless they are explicitly listed as unresolved
+blocking decisions:
+
+- `TBD`, `TODO`, `implement later`, `similar to Task N`, or placeholders left in
+  executable tasks;
+- vague requirements such as "handle edge cases", "add validation", "proper error
+  handling", or "write tests" without naming observable behavior/failure cases;
+- commands, file paths, symbols, APIs, schemas, or exact line ranges invented
+  without inspecting the repository/documentation that defines them;
+- an interface consumed by a later task without identifying where it already
+  exists or which earlier task produces it;
+- acceptance criteria that cannot be observed or validated from the stated checks;
+- migrations/public API/config/deployment changes without compatibility, rollout,
+  failure, and rollback considerations where those risks apply;
+- security/authorization/data-boundary changes without explicit trust-boundary
+  requirements and validation where relevant;
+- a task depending on an unresolved product/architecture decision while pretending
+  the implementation path is settled.
+
+Tests in a plan should describe the behavior and important edge/failure cases the
+implementation must prove. Include exact test code only when the test itself is a
+critical contract or subtle regression; do not force verbose code snippets for
+routine cases.
+
+Validation commands must come from the repository or verified tooling. If a check
+cannot currently be run, state the limitation and what evidence would satisfy it
+instead of inventing expected output.
+
 ## Plan template
 
 ```markdown
@@ -76,16 +107,27 @@ formats, dependency limits. Separate known facts from unresolved decisions.]
 - [ ] Resolve review findings and record the accepted revision before advancing.
 ```
 
-Do not leave these template placeholders in the real plan. Replace vague phrases
-such as "handle errors" with concrete failure behavior and observable checks.
-Do not invent commands, symbols, APIs, or exact line numbers without inspecting
-the source. An outcome-based task is valid without a full implementation listing.
+Do not leave template placeholders in the real plan. An outcome-based task is
+valid without a full implementation listing.
 
 ## Self-review and handoff
 
-Check spec coverage, interface consistency, validation feasibility, task size,
-risk-based routing, phase authorization, and PR/stack boundaries once. Correct
-the plan rather than spawning a reviewer for its formatting.
+Before finalizing, check once:
+
+1. **Spec coverage:** every requirement/non-goal maps to a task or is explicitly
+   excluded/unresolved.
+2. **Placeholder/vagueness scan:** no executable task relies on the failure
+   patterns above.
+3. **Interface consistency:** producers/consumers use the same names, types,
+   schemas, files, and ordering assumptions.
+4. **Validation feasibility:** commands exist and acceptance criteria are actually
+   testable; unavailable checks are called out.
+5. **Risk coverage:** security/data/migration/compatibility/rollback concerns are
+   represented when applicable.
+6. **Delivery boundaries:** issue/PR bases, stacks, phase stops, and merge order
+   reflect the requested workflow.
+
+Correct plan defects inline rather than spawning a reviewer for formatting.
 
 For plan-only requests, return the plan and stop. When the user already requested
 implementation, continue into the authorized workflow without another execution
