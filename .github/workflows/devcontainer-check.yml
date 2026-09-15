@@ -36,10 +36,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.BUILDX_CACHE_DIR }}
-          key: devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-${{ github.run_id }}-check
+          key: devcontainer-buildx-${{ runner.os }}-amd64-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
           restore-keys: |
-            devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-
-            devcontainer-buildx-${{ runner.os }}-
+            devcontainer-buildx-${{ runner.os }}-amd64-
 
       - name: Build shared devcontainer
         shell: bash
