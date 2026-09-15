@@ -61,6 +61,18 @@ repos:
 
 If you are working from a local checkout instead of a published Git repo, use a local path-based `repo: local` entry that runs the same command.
 
+## Shared Devcontainer Image
+
+The reusable Techletes developer environment lives in `devcontainers/standard` and is published as:
+
+```text
+ghcr.io/techletes/devcontainer
+```
+
+It provides the common Python, Node, Bun, Docker, Azure, database, Codex, 1Password, and editor tooling used across Techletes repositories. Project repositories should consume the prebuilt image and keep only project-specific services, ports, lifecycle scripts, dependencies, and credentials locally.
+
+See [`devcontainers/standard/README.md`](devcontainers/standard/README.md) for the image contents, versioning policy, release process, and migration examples.
+
 ### GitHub Webhook Auth Proxy
 
 This repository now includes a standalone ASGI proxy that authorizes GitHub webhooks before forwarding them to a Hermes gateway.

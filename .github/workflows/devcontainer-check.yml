@@ -1,0 +1,51 @@
+name: Devcontainer image checks
+
+on:
+  pull_request:
+    paths:
+      - "devcontainers/standard/**"
+      - ".github/workflows/devcontainer-check.yml"
+      - ".github/workflows/devcontainer-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: devcontainer-check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Dev Container CLI
+        run: npm install --global @devcontainers/cli@0.89.0
+
+      - name: Build shared devcontainer
+        run: |
+          devcontainer build \
+            --workspace-folder devcontainers/standard \
+            --platform linux/amd64 \
+            --image-name techletes-devcontainer:test
+
+      - name: Verify shared toolchain
+        run: |
+          docker run --rm \
+            --entrypoint /bin/bash \
+            techletes-devcontainer:test \
+            -lc /usr/local/share/techletes/verify-image.sh
+
+      - name: Verify embedded Dev Container metadata
+        run: |
+          metadata="$(docker inspect techletes-devcontainer:test --format '{{ index .Config.Labels "devcontainer.metadata" }}')"
+          test -n "${metadata}"
+          grep -Fq 'ms-python.python' <<<"${metadata}"
+          grep -Fq 'azure-cli' <<<"${metadata}"
+          grep -Fq 'docker-outside-of-docker' <<<"${metadata}"
