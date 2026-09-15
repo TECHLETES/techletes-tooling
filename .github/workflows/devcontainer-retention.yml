@@ -1,0 +1,34 @@
+name: Prune shared devcontainer
+
+on:
+  workflow_run:
+    workflows:
+      - "Publish shared devcontainer"
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: devcontainer-retention
+  cancel-in-progress: false
+
+jobs:
+  prune:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Keep latest three devcontainer images
+        uses: snok/container-retention-policy@d3bdcf5ce9b05f685154e4a16c39233b245e3d53 # v3.1.0
+        with:
+          account: TECHLETES
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: devcontainer
+          tag-selection: both
+          cut-off: 0s
+          keep-n-most-recent: 3
+          timestamp-to-use: created_at
+          dry-run: false
