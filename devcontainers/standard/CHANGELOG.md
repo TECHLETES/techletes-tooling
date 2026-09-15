@@ -16,5 +16,6 @@ Initial shared Techletes development image.
 - PostgreSQL 18 client and development libraries.
 - MariaDB client, Connector/C development libraries, unixODBC, and MariaDB ODBC driver.
 - Redis client and common shell/network diagnostics.
-- Shared VS Code extensions and Python/editor defaults through Dev Container image metadata.
+- Shared Dev Container metadata for the `vscode` user, cache volumes, Python/editor defaults, and the Techletes full-stack VS Code baseline.
+- Full-stack editor baseline includes Jupyter, Biome, ESLint, Tailwind CSS, Playwright, SQLTools with MySQL/PostgreSQL/SQLite drivers, Microsoft PostgreSQL tooling, Office viewing, Caddyfile support, Docker tooling, GitHub tooling, and Codex/ChatGPT.
 - Persistent shared caches for uv, pre-commit, and Bun.
