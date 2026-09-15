@@ -10,6 +10,13 @@ acceptance. Delegate bounded implementation, not unresolved product decisions.
 Use one implementation writer at a time by default. Do small, clear, low-risk
 changes inline; do not manufacture tasks merely to use subagents.
 
+Use these references when their decision point occurs:
+- [model-routing.md](references/model-routing.md) before the first dispatch and
+  whenever capability/effort must change;
+- [escalation.md](references/escalation.md) when scope widens, a worker blocks, or
+  a correction fails;
+- [evidence.md](references/evidence.md) when accepting work or reusing validation.
+
 ## Authorization and scope
 
 An explicit request to use subagents, execute this plan with this workflow, or
@@ -44,10 +51,10 @@ Review the plan once for conflicting requirements, missing interfaces, and
 unsafe assumptions. Resolve from existing evidence first; batch only genuinely
 blocking decisions for the user. Do not ask a planner to repeat a sound plan.
 
-Load [model-routing.md](references/model-routing.md) before the first dispatch.
-Use its explicit role/model/effort settings and evidence-based escalation rules.
 Preserve the user's main-session model choice; the ordinary recommendation is
-Terra medium, not an instruction to switch models silently.
+Terra medium, not an instruction to switch models silently. Apply actual native
+role/model/effort settings from the routing reference rather than writing model
+names only in the prompt.
 
 ## Durable progress and recovery
 
@@ -72,13 +79,13 @@ Never run destructive cleanup to reset workflow state.
    plans. Ensure the brief has objective, non-goals, owned paths, exact interface
    constraints, acceptance criteria, validation commands, and assigned checkout.
    Add binding constraints from other sources and only relevant prior decisions.
-2. **Route.** Choose routine/high/deep worker from the shared policy. Set the
-   actual configuration, not just words in its prompt. Use the
+2. **Route.** Choose routine/high/deep worker from the shared routing policy. Set
+   the actual configuration, not just words in its prompt. Use the
    [implementer template](implementer-prompt.md). No nested delegation.
 3. **Implement.** The worker runs targeted checks, self-reviews, and commits
    within its assigned scope. Keep it alive for focused corrections. A fresh
    task gets a fresh worker; a context answer need not create a new one.
-4. **Gate.** Inspect the actual diff and test evidence, not only the summary.
+4. **Gate.** Inspect the actual diff and validation evidence, not only the summary.
    For substantive tasks use a fresh independent reviewer with the
    [task-reviewer template](task-reviewer-prompt.md). A routine low-risk task
    may use a parent review with both verdicts recorded as `review_mode=parent`;
@@ -87,11 +94,13 @@ Never run destructive cleanup to reset workflow state.
 5. **Correct.** Address Critical/Important findings before moving on. Send one
    consolidated correction request to the same worker where suitable. Re-run
    covering checks on the changed revision and re-review the affected scope.
-   After one focused correction fails without new evidence, apply the routing
-   policy rather than looping. Track Minor findings for final disposition.
-6. **Accept.** Record spec compliance, quality verdict, validated revision,
-   commit range, unresolved limitations, and next action. Close finished child
-   threads. Do not carry an unfinished task into the next dependent task.
+   If the focused correction still fails without materially new evidence, stop
+   the loop and apply [escalation.md](references/escalation.md). Track Minor
+   findings for final disposition.
+6. **Accept.** Apply [evidence.md](references/evidence.md), then record spec
+   compliance, quality verdict, validated revision, commit range, unresolved
+   limitations, and next action. Close finished child threads. Do not carry an
+   unfinished task into the next dependent task.
 
 Dependent tasks work well sequentially: complete and verify the producer's
 contract before dispatching its consumer. File separation alone does not imply
@@ -113,13 +122,13 @@ the implementation narrative second. Read surrounding code and call sites when
 needed to resolve a concrete risk; a diff is not a hard evidence boundary.
 Do not tell reviewers what not to flag or pre-rate findings for them.
 
-A test report must name its command, outcome, relevant output, environment, and
-tested revision. Reuse evidence only for unchanged code and compatible scope/
-environment. Missing, stale, ambiguous, or contradicted evidence needs focused
-verification. Reviewers may request targeted reproductions; they must not
-modify the shared checkout or widen permissions to run them. Run broader suites
-at integration/final gates when impact warrants them, not once per trivial edit.
-Passing tests do not prove that requirements or architecture are correct.
+Follow [evidence.md](references/evidence.md) for what a validation report must
+contain and when previous results may be reused. Missing, stale, ambiguous, or
+contradicted evidence needs focused verification. Reviewers may request targeted
+reproductions; they must not modify the shared checkout or widen permissions to
+run them. Run broader suites at integration/final gates when impact warrants them,
+not once per trivial edit. Passing tests do not prove that requirements,
+architecture, or security boundaries are correct.
 
 Resolve every unverified requirement before acceptance, or state it as a blocker/
 limitation without a clean verdict. A finding that contradicts an explicit
