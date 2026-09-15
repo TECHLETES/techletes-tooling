@@ -1,172 +1,111 @@
-# Code Reviewer Prompt Template
+# Whole-branch reviewer handoff
 
-Use this template when dispatching a code reviewer subagent.
+Select `techletes-reviewer` or `techletes-reviewer-critical` using
+[model-routing.md](../subagent-driven-development/references/model-routing.md).
+Use [validation evidence](../subagent-driven-development/references/evidence.md)
+when judging prior checks. Fill the prompt below; do not treat it as an API schema.
 
-**Purpose:** Review completed work against requirements and code quality standards before it cascades into more work.
+```text
+Independently review [BRANCH/PR] against [ACTUAL_BASE_BRANCH].
+Base revision: [BASE_SHA]. Candidate revision: [HEAD_SHA].
+Requirements/spec: [PATHS]. Binding constraints: [CONSTRAINTS/PATH].
+Diff package: [DIFF_FILE]. Validation reports: [REPORT_PATHS].
+Unresolved earlier findings: [LIST/PATH, or none].
 
-```
-Subagent (general-purpose):
-  description: "Review code changes"
-  prompt: |
-    You are a Senior Code Reviewer with expertise in software architecture,
-    design patterns, and best practices. Your job is to review completed work
-    against its plan or requirements and identify issues before they cascade.
+Read requirements and actual changes before the implementation narrative.
+Verify the package covers the final candidate and actual PR base. For a stacked
+PR, judge only child-specific changes against its direct parent and do not report
+unchanged parent code as a child defect.
 
-    ## What Was Implemented
+Review the complete deliverable, not only syntax or changed lines:
 
-    [DESCRIPTION]
+Requirements and scope
+- Is every required behavior, failure case, migration/config/documentation change,
+  and explicit non-functional constraint present?
+- Were unrequested features, abstractions, dependencies, or public contracts added?
+- Are deviations from the plan/requirements actually justified, or do they change
+  the requested outcome?
 
-    ## Requirements / Plan
+Correctness and maintainability
+- Are control flow, edge cases, state transitions, concurrency/order, and error
+  paths correct?
+- Are responsibilities clear, names/types/contracts accurate, and error handling
+  explicit rather than swallowed?
+- Is the code DRY without premature abstraction or needless indirection?
+- Did the change create an oversized/tangled unit or duplicate behavior that will
+  predictably diverge?
 
-    [PLAN_OR_REQUIREMENTS]
+Architecture and integration
+- Does the design fit surrounding project patterns and cross-task interfaces?
+- Are callers/consumers, performance/scalability characteristics, shared state,
+  retries/idempotency, and resource lifecycle correct where relevant?
+- Do schema/API/configuration changes have safe migration and rollout behavior?
 
-    ## Git Range to Review
+Security and data safety
+- Check authorization and tenant/client boundaries, secrets, input validation,
+  data integrity, irreversible operations, injection/path traversal or similar
+  trust-boundary risks when relevant.
+- Check migration/rollback and data-loss behavior for stateful changes.
 
-    **Base:** [BASE_SHA]
-    **Head:** [HEAD_SHA]
+Compatibility and production readiness
+- Are backward compatibility, deployment/config defaults, environment variables,
+  feature flags, observability/logging, operational failure modes, and docs/help
+  handled where the change affects them?
+- Are cleanup/recovery paths safe and are destructive operations sufficiently
+  guarded?
 
-    ```bash
-    git diff --stat [BASE_SHA]..[HEAD_SHA]
-    git diff [BASE_SHA]..[HEAD_SHA]
-    ```
+Testing and evidence
+- Do tests assert observable behavior rather than merely mocks or implementation
+  details?
+- Are important edge/failure/integration cases covered at the right level?
+- Would the regression test actually fail for the defect it claims to prevent?
+- Are reported checks from the same revision, scope, and compatible environment?
+- Passing tests do not establish requirement completeness, architecture, or
+  security correctness.
 
-    ## Read-Only Review
+Use the diff as the starting point, not a hard evidence boundary. Inspect complete
+functions, callers, tests, migrations, configuration, and unchanged integrations
+when needed to resolve a concrete risk. Do not crawl unrelated code without a
+named reason.
 
-    Your review is read-only on this checkout. Do not mutate the working tree, the index, HEAD, or branch state in any way. Use tools like `git show`, `git diff`, and `git log` to inspect history. If you need a working copy of a different revision, check it out into a separate temporary directory (e.g. `git worktree add /tmp/review-[SHA] [SHA]`) — never move HEAD on this checkout.
+Reuse validation only for a matching revision/scope/environment. State gaps and
+request focused reproduction where evidence is missing or doubtful. Do not edit
+the shared checkout/index, move HEAD, commit, push, merge, spawn children, or
+widen permissions. If safe execution would require mutation, report the exact
+isolated check instead. Do not rerun unrelated full suites by habit.
 
-    ## What to Check
+Severity:
+- Critical: realistic security/data-loss/corruption risk, broken core behavior,
+  or unsafe integration.
+- Important: missed requirement, incorrect/fragile behavior, broken compatibility
+  or interface, serious maintainability damage, or a test gap that blocks trust.
+- Minor: low-risk polish, localized maintainability, optional documentation, or
+  extra coverage that does not block integration.
 
-    **Plan alignment:**
-    - Does the implementation match the plan / requirements?
-    - Are deviations justified improvements, or problematic departures?
-    - Is all planned functionality present?
+For each finding provide file:line, what is wrong, why it matters, and a fix or
+required decision when not obvious. Explicitly call out defects mandated by the
+plan instead of assuming the plan makes them acceptable. Resolve or disposition
+previous findings; do not silently drop them. Evidence-backed strengths may be
+included briefly, but never fabricate praise.
 
-    **Code quality:**
-    - Clean separation of concerns?
-    - Proper error handling?
-    - Type safety where applicable?
-    - DRY without premature abstraction?
-    - Edge cases handled?
+Return:
 
-    **Architecture:**
-    - Sound design decisions?
-    - Reasonable scalability and performance?
-    - Security concerns?
-    - Integrates cleanly with surrounding code?
-
-    **Testing:**
-    - Tests verify real behavior, not mocks?
-    - Edge cases covered?
-    - Integration tests where they matter?
-    - All tests passing?
-
-    **Production readiness:**
-    - Migration strategy if schema changed?
-    - Backward compatibility considered?
-    - Documentation complete?
-    - No obvious bugs?
-
-    ## Calibration
-
-    Categorize issues by actual severity. Not everything is Critical.
-    Acknowledge what was done well before listing issues — accurate praise
-    helps the implementer trust the rest of the feedback.
-
-    If you find significant deviations from the plan, flag them specifically
-    so the implementer can confirm whether the deviation was intentional.
-    If you find issues with the plan itself rather than the implementation,
-    say so.
-
-    ## Output Format
-
-    ### Strengths
-    [What's well done? Be specific.]
-
-    ### Issues
-
-    #### Critical (Must Fix)
-    [Bugs, security issues, data loss risks, broken functionality]
-
-    #### Important (Should Fix)
-    [Architecture problems, missing features, poor error handling, test gaps]
-
-    #### Minor (Nice to Have)
-    [Code style, optimization opportunities, documentation polish]
-
-    For each issue:
-    - File:line reference
-    - What's wrong
-    - Why it matters
-    - How to fix (if not obvious)
-
-    ### Recommendations
-    [Improvements for code quality, architecture, or process]
-
-    ### Assessment
-
-    **Ready to merge?** [Yes | No | With fixes]
-
-    **Reasoning:** [1-2 sentence technical assessment]
-
-    ## Critical Rules
-
-    **DO:**
-    - Categorize by actual severity
-    - Be specific (file:line, not vague)
-    - Explain WHY each issue matters
-    - Acknowledge strengths
-    - Give a clear verdict
-
-    **DON'T:**
-    - Say "looks good" without checking
-    - Mark nitpicks as Critical
-    - Give feedback on code you didn't actually read
-    - Be vague ("improve error handling")
-    - Avoid giving a clear verdict
-```
-
-**Placeholders:**
-- `[DESCRIPTION]` — brief summary of what was built
-- `[PLAN_OR_REQUIREMENTS]` — what it should do (plan file path, task text, or requirements)
-- `[BASE_SHA]` — starting commit
-- `[HEAD_SHA]` — ending commit
-
-**Reviewer returns:** Strengths, Issues (Critical / Important / Minor), Recommendations, Assessment
-
-## Example Output
-
-```
-### Strengths
-- Clean database schema with proper migrations (db.ts:15-42)
-- Comprehensive test coverage (18 tests, all edge cases)
-- Good error handling with fallbacks (summarizer.ts:85-92)
+### Spec Compliance
+[Compliant | Issues found | Not fully verified]
+[Missing/extra/misunderstood/unverified requirements]
 
 ### Issues
-
+#### Critical
 #### Important
-1. **Missing help text in CLI wrapper**
-   - File: index-conversations:1-31
-   - Issue: No --help flag, users won't discover --concurrency
-   - Fix: Add --help case with usage examples
-
-2. **Date validation missing**
-   - File: search.ts:25-27
-   - Issue: Invalid dates silently return no results
-   - Fix: Validate ISO format, throw error with example
-
 #### Minor
-1. **Progress indicators**
-   - File: indexer.ts:130
-   - Issue: No "X of Y" counter for long operations
-   - Impact: Users don't know how long to wait
+[Evidence-backed findings; "None" where empty]
 
-### Recommendations
-- Add progress reporting for user experience
-- Consider config file for excluded projects (portability)
+### Validation / Integration Checks
+[Checks inspected/run, stale or missing evidence, unresolved integration risks]
 
 ### Assessment
+**Ready to merge:** [Yes | No | With fixes | Insufficient evidence]
+**Reasoning:** [concise technical assessment]
 
-**Ready to merge: With fixes**
-
-**Reasoning:** Core implementation is solid with good architecture and tests. Important issues (help text, date validation) are easily fixed and don't affect core functionality.
+Review approval does not authorize a merge.
 ```

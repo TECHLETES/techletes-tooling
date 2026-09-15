@@ -1,142 +1,91 @@
-# Implementer Subagent Prompt Template
+# Implementer handoff
 
-Use this template when dispatching an implementer subagent.
+Select the configured role using [model-routing.md](references/model-routing.md).
+Use [escalation.md](references/escalation.md) when scope or reasoning starts to
+widen, and [evidence.md](references/evidence.md) for the handoff contract. This is
+a prompt template, not a dispatch API schema. Use only fields supported by the
+current client and do not leave placeholders in a real dispatch.
 
-```
-Subagent (general-purpose):
-  description: "Implement Task N: [task name]"
-  model: gpt-5.6-luna
-  reasoning_effort: medium
-  prompt: |
-    You are implementing Task N: [task name]
+```text
+Implement Task [N]: [objective].
+Role: [configured worker role]; model/effort: [actual selected settings].
+Work only in [absolute checkout path]. Do not spawn children.
 
-    ## Task Description
+Read [BRIEF_FILE] first: it is the source of requirements, non-goals, owned
+paths, global constraints, interfaces, acceptance criteria, and validation.
+Relevant prior decisions/interfaces not already in the brief: [only essentials].
+Starting revision: [TASK_BASE]. Report file: [REPORT_FILE].
+Commit scope: [owned changes, or explicit user-authorized all-changes policy].
 
-    Read your task brief first: [BRIEF_FILE]
-    It contains the full task text from the plan.
+Before editing, stop and ask the coordinator if a material requirement,
+acceptance criterion, interface, or dependency is genuinely ambiguous or
+conflicts with the repository/tests. Do not ask about choices the brief already
+settles and do not invent policy to avoid a question.
 
-    ## Context
+Implement the smallest change following existing patterns. Inspect additional
+code when needed, but do not expand scope or invent unresolved contracts.
+Preserve user changes. Do not push, merge, switch branches, rewrite history, or
+widen permissions.
 
-    [Scene-setting: where this fits, dependencies, architectural context]
+Escalate with NEEDS_CONTEXT or BLOCKED when any of these occurs:
+- multiple materially different architecture choices remain unresolved;
+- requirements/tests disagree on expected behavior;
+- completing the task requires an unplanned public API/schema/migration,
+  deployment/configuration contract, or broad restructuring;
+- required access, service behavior, fixture, dependency, or documentation is
+  missing and cannot be established from the assigned environment;
+- work is spreading through progressively broader files without converging on a
+  bounded implementation;
+- user changes overlap the task and cannot be preserved safely;
+- a focused correction reproduces the same failure without new evidence.
 
-    ## Before You Begin
+When escalating, name the exact unresolved fact/decision, evidence inspected,
+and what would unblock the work. Do not repeatedly retry the same approach.
 
-    If you have questions about:
-    - The requirements or acceptance criteria
-    - The approach or implementation strategy
-    - Dependencies or assumptions
-    - Anything unclear in the task description
+Run focused tests while iterating and the agreed checks before handoff. Add a
+meaningful regression check for changed behavior; use TDD when required. Prefer
+observable behavior over mock-only assertions. Avoid repeating a full suite after
+every edit unless the task's impact warrants it.
 
-    **Ask them now.** Raise any concerns before starting work.
+Before handoff, self-review the actual diff:
+- Completeness: every acceptance criterion implemented or explicitly reported as
+  blocked/unverified; no requirement silently omitted.
+- Scope: no unrequested feature, abstraction, dependency, or unrelated cleanup;
+  YAGNI and existing project patterns preserved.
+- Correctness: edge cases, error paths, trust/authorization/data-integrity
+  boundaries considered where relevant.
+- Quality: names match behavior, control flow is understandable, errors are not
+  swallowed, types/contracts stay consistent, and touched code remains
+  maintainable without speculative abstraction.
+- Tests: changed behavior and important failure cases are actually asserted;
+  tests are not passing merely because everything is mocked.
+- Hygiene: review the complete diff for accidental generated files, debug code,
+  secrets, stale comments, unexplained warnings introduced by the change, and
+  unintended user-file modifications.
 
-    ## Your Job
+Fix issues found during self-review before reporting when they remain within the
+approved task. Escalate instead of silently widening the brief.
 
-    Once you're clear on requirements:
-    1. Implement exactly what the task specifies
-    2. Write tests (following TDD if task says to)
-    3. Verify implementation works
-    4. Commit your work
-    5. Self-review (see below)
-    6. Report back
+Write [REPORT_FILE] with:
+- acceptance criteria implemented and any unmet/unverified items;
+- files changed and relevant preserved user changes;
+- exact validation commands, outcomes, relevant output, and environment;
+- candidate/tested revision;
+- TDD RED/GREEN evidence when TDD was required;
+- self-review findings and fixes;
+- remaining risks, warnings, assumptions, or follow-up decisions.
 
-    Work from: [directory]. If this task is one of multiple implementation
-    tasks running in parallel, [directory] MUST be this subagent's dedicated
-    git worktree; never modify a shared checkout. Sequential tasks may use the
-    current checkout without a dedicated worktree.
+After review fixes, append fresh evidence for the amended revision. Do not reuse
+results from a pre-fix snapshot as proof of the new code.
 
-    **While you work:** If you encounter something unexpected or unclear, **ask questions**.
-    It's always OK to pause and clarify. Don't guess or make assumptions.
+Return at most 15 lines:
+- DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED;
+- commit range;
+- one-line validation summary;
+- unresolved concerns or blocker details;
+- report path.
 
-    While iterating, run the focused test for what you're changing; run the
-    full suite once before committing, not after every edit.
-
-    ## Code Organization
-
-    You reason best about code you can hold in context at once, and your edits are more
-    reliable when files are focused. Keep this in mind:
-    - Follow the file structure defined in the plan
-    - Each file should have one clear responsibility with a well-defined interface
-    - If a file you're creating is growing beyond the plan's intent, stop and report
-      it as DONE_WITH_CONCERNS — don't split files on your own without plan guidance
-    - If an existing file you're modifying is already large or tangled, work carefully
-      and note it as a concern in your report
-    - In existing codebases, follow established patterns. Improve code you're touching
-      the way a good developer would, but don't restructure things outside your task.
-
-    ## When You're in Over Your Head
-
-    It is always OK to stop and say "this is too hard for me." Bad work is worse than
-    no work. You will not be penalized for escalating.
-
-    **STOP and escalate when:**
-    - The task requires architectural decisions with multiple valid approaches
-    - You need to understand code beyond what was provided and can't find clarity
-    - You feel uncertain about whether your approach is correct
-    - The task involves restructuring existing code in ways the plan didn't anticipate
-    - You've been reading file after file trying to understand the system without progress
-
-    **How to escalate:** Report back with status BLOCKED or NEEDS_CONTEXT. Describe
-    specifically what you're stuck on, what you've tried, and what kind of help you need.
-    The controller can provide more context, re-dispatch with a more capable model,
-    or break the task into smaller pieces.
-
-    ## Before Reporting Back: Self-Review
-
-    Review your work with fresh eyes. Ask yourself:
-
-    **Completeness:**
-    - Did I fully implement everything in the spec?
-    - Did I miss any requirements?
-    - Are there edge cases I didn't handle?
-
-    **Quality:**
-    - Is this my best work?
-    - Are names clear and accurate (match what things do, not how they work)?
-    - Is the code clean and maintainable?
-
-    **Discipline:**
-    - Did I avoid overbuilding (YAGNI)?
-    - Did I only build what was requested?
-    - Did I follow existing patterns in the codebase?
-
-    **Testing:**
-    - Do tests actually verify behavior (not just mock behavior)?
-    - Did I follow TDD if required?
-    - Are tests comprehensive?
-    - Is the test output pristine (no stray warnings or noise)?
-
-    If you find issues during self-review, fix them now before reporting.
-
-    ## After Review Findings
-
-    If a reviewer finds issues and you fix them, re-run the tests that cover
-    the amended code and append the results to your report file. Reviewers
-    will not re-run tests for you — your report is the test evidence.
-
-    ## Report Format
-
-    Write your full report to [REPORT_FILE]:
-    - What you implemented (or what you attempted, if blocked)
-    - What you tested and test results
-    - **TDD Evidence** (if TDD was required for this task):
-      - RED: command run, relevant failing output before implementation, and why the failure was expected
-      - GREEN: command run and relevant passing output after implementation
-    - Files changed
-    - Self-review findings (if any)
-    - Any issues or concerns
-
-    Then report back with ONLY (under 15 lines — the detail lives in the
-    report file):
-    - **Status:** DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT
-    - Commits created (short SHA + subject)
-    - One-line test summary (e.g. "14/14 passing, output pristine")
-    - Your concerns, if any
-    - The report file path
-
-    If BLOCKED or NEEDS_CONTEXT, put the specifics in the final message
-    itself — the controller acts on it directly.
-
-    Use DONE_WITH_CONCERNS if you completed the work but have doubts about correctness.
-    Use BLOCKED if you cannot complete the task. Use NEEDS_CONTEXT if you need
-    information that wasn't provided. Never silently produce work you're unsure about.
+DONE_WITH_CONCERNS requires the requested implementation to be complete. Use
+NEEDS_CONTEXT for missing information/evidence and BLOCKED for incomplete work or
+a decision outside the brief. Never silently produce work you do not trust.
 ```

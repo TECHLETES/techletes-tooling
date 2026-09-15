@@ -1,189 +1,102 @@
-# Task Reviewer Prompt Template
+# Independent task review
 
-Use this template when dispatching a task reviewer subagent. The reviewer
-reads the task's diff once and returns two verdicts: spec compliance and
-code quality.
+Use `techletes-reviewer` (Terra high), or `techletes-reviewer-critical` (Sol high)
+when risk warrants it, following [model-routing.md](references/model-routing.md).
+Use [evidence.md](references/evidence.md) for validation handling. Start a fresh
+review context, not the worker's thread. Fill every placeholder.
 
-**Purpose:** Verify one task's implementation matches its requirements (nothing
-more, nothing less) and is well-built (clean, tested, maintainable)
+```text
+Review Task [N] independently in [CHECKOUT]. Do not edit the working tree or
+index, move HEAD, commit, push, merge, spawn children, or widen permissions.
 
-```
-Subagent (general-purpose):
-  description: "Review Task N (spec + quality)"
-  model: gpt-5.6-luna
-  reasoning_effort: medium
-  prompt: |
-    You are reviewing one task's implementation: first whether it matches its
-    requirements, then whether it is well-built. This is a task-scoped gate,
-    not a merge review — a broad whole-branch review happens separately after
-    all tasks are complete.
+Read [BRIEF_FILE] and binding constraints [CONSTRAINTS/PATH] first.
+Then inspect [DIFF_FILE], covering [BASE_SHA]..[HEAD_SHA]. Form an initial
+assessment before reading implementation claims in [REPORT_FILE].
+Relevant integration boundaries: [interfaces/call sites/risks].
 
-    ## What Was Requested
+Your job is to produce two separate verdicts: spec compliance and implementation
+quality. Treat the report, test claims, and design rationale as unverified claims
+until checked against the requirements and code.
 
-    Read the task brief: [BRIEF_FILE]
+Spec compliance:
+- Missing: a requested behavior, constraint, failure case, migration, docs/update,
+  or integration requirement is absent.
+- Extra: unrequested behavior, dependency, abstraction, API, or scope was added.
+- Misunderstood: the requested outcome exists but with materially wrong semantics.
+- Unverified: a requirement cannot be established from the available evidence;
+  name the focused check or context needed rather than assuming success.
 
-    Global constraints from the spec/design that bind this task:
-    [GLOBAL_CONSTRAINTS]
+Implementation quality:
+- Correctness: edge cases, state transitions, concurrency/order, error paths, and
+  data integrity are sound for the task's actual risk.
+- Security/trust boundaries: authorization, tenant/client separation, secrets,
+  input validation, and destructive operations are handled where relevant.
+- Interfaces/compatibility: public APIs, types, schemas, migrations, config,
+  callers, and backward compatibility stay coherent.
+- Structure: responsibilities are understandable; no harmful duplication,
+  speculative abstraction, deep indirection, or task-created oversized/tangled
+  units without justification.
+- Error handling/observability: failures are explicit and useful; errors are not
+  swallowed; relevant logging/diagnostics remain adequate.
+- Tests: changed observable behavior and important failure cases are asserted;
+  tests do not merely validate mocks or implementation details; regression tests
+  would fail for the bug/behavior they claim to protect.
+- Scope/hygiene: no unrelated refactor, debug artifacts, secrets, accidental
+  generated files, or unexplained warnings introduced by the change.
 
-    ## What the Implementer Claims They Built
+Use the diff as the starting point, not the limit. Read complete functions,
+callers, tests, migrations, configuration, or unchanged code when needed to
+resolve a concrete risk. Do not crawl unrelated code or re-derive an already
+correct review package. Confirm that the package revision matches the candidate.
 
-    Read the implementer's report: [REPORT_FILE]
+Reuse validation only when command, outcome, environment, scope, and tested
+revision support this candidate. Do not rerun an unchanged suite by ritual. Run
+or request a focused reproduction when code inspection raises a concrete doubt.
+If the read-only environment cannot run it safely, state the exact check needed
+rather than changing permissions or pretending it passed.
 
-    ## Diff Under Review
+Severity calibration:
+- Critical: realistic security/data-loss/corruption risk, broken core behavior,
+  or a defect that makes the candidate unsafe to integrate.
+- Important: missed requirement, incorrect/fragile behavior, broken interface,
+  material maintainability problem, or meaningful test gap that blocks trust in
+  this task.
+- Minor: localized polish, low-risk maintainability improvement, or optional
+  coverage/documentation improvement that does not block the task.
 
-    **Base:** [BASE_SHA]
-    **Head:** [HEAD_SHA]
-    **Diff file:** [DIFF_FILE]
+A plan-mandated defect is still a finding: label it as such so the coordinator
+can resolve the requirement conflict. Do not downgrade an issue because the
+worker intended it. Do not report pre-existing unrelated problems as new task
+findings without demonstrating impact from this change.
 
-    Read the diff file once — it contains the commit list, a stat summary,
-    and the full diff with surrounding context, and it is your view of the
-    change. The diff's context lines ARE the changed files: do not Read a
-    changed file separately unless a hunk you must judge is cut off
-    mid-function — and say so in your report. Do not re-run git commands.
-    If the diff file is missing, fetch the diff yourself:
-    `git diff --stat [BASE_SHA]..[HEAD_SHA]` and `git diff [BASE_SHA]..[HEAD_SHA]`.
-    Do not crawl the broader codebase. Inspect code outside the diff only
-    to evaluate a concrete risk you can name — one focused check per named
-    risk, and name both the risk and what you checked in your report.
-    Cross-cutting changes are legitimate named risks: if the diff changes
-    lock ordering, a function or API contract, or shared mutable state,
-    checking the call sites is the right method.
+For every finding give file:line, what is wrong, why it matters, and the fix or
+required decision when not obvious. Evidence-backed strengths may be noted, but
+do not fabricate praise or spend output on generic positives.
 
-    Your review is read-only on this checkout. Do not mutate the working
-    tree, the index, HEAD, or branch state in any way.
+Return exactly these sections:
 
-    ## Do Not Trust the Report
+### Spec Compliance
+[Compliant | Issues found | Not fully verified]
+[Missing/extra/misunderstood/unverified items with file:line or required check]
 
-    Treat the implementer's report as unverified claims about the code. It
-    may be incomplete, inaccurate, or optimistic. Verify the claims against
-    the diff. Design rationales in the report are claims too: "left it per
-    YAGNI," "kept it simple deliberately," or any other justification is the
-    implementer grading their own work. Judge the code on its merits — a
-    stated rationale never downgrades a finding's severity.
+### Issues
+#### Critical
+#### Important
+#### Minor
+[Findings with evidence; write "None" for an empty severity]
 
-    ## Tests
+### Validation / Checks
+[What you inspected or ran; stale/missing evidence and limitations]
 
-    The implementer already ran the tests and reported results with TDD
-    evidence for exactly this code. Do not re-run the suite to confirm their
-    report. Run a test only when reading the code raises a specific doubt
-    that no existing run answers — and then a focused test, never a
-    package-wide suite, race detector run, or repeated/high-count loop. If
-    heavy validation seems warranted, recommend it in your report instead of
-    running it. If you cannot run commands in this environment, name the
-    test you would run.
+### Assessment
+**Task quality:** [Approved | Needs fixes | Insufficient evidence]
+**Reasoning:** [concise technical reason]
 
-    Warnings or other noise in the implementer's reported test output are
-    findings — test output should be pristine.
-
-    ## Part 1: Spec Compliance
-
-    Compare the diff against What Was Requested:
-
-    - **Missing:** requirements they skipped, missed, or claimed without
-      implementing
-    - **Extra:** features that weren't requested, over-engineering, unneeded
-      "nice to haves"
-    - **Misunderstood:** right feature built the wrong way, wrong problem
-      solved
-
-    If a requirement cannot be verified from this diff alone (it lives in
-    unchanged code or spans tasks), report it as a ⚠️ item instead of
-    broadening your search.
-
-    ## Part 2: Code Quality
-
-    **Code quality:**
-    - Clean separation of concerns?
-    - Proper error handling?
-    - DRY without premature abstraction?
-    - Edge cases handled?
-
-    **Tests:**
-    - Do the new and changed tests verify real behavior, not mocks?
-    - Are the task's edge cases covered?
-
-    **Structure:**
-    - Does each file have one clear responsibility with a well-defined interface?
-    - Are units decomposed so they can be understood and tested independently?
-    - Is the implementation following the file structure from the plan?
-    - Did this change create new files that are already large, or
-      significantly grow existing files? (Don't flag pre-existing file
-      sizes — focus on what this change contributed.)
-
-    Your report should point at evidence: file:line references for every
-    finding and for any check you would otherwise answer with a bare
-    "yes." A tight report that cites lines gives the controller everything
-    it needs.
-
-    Your final message is the report itself: begin directly with the
-    spec-compliance verdict. Every line is a verdict, a finding with
-    file:line, or a check you ran — no preamble, no process narration,
-    no closing summary.
-
-    ## Calibration
-
-    Categorize issues by actual severity. Not everything is Critical.
-    Important means this task cannot be trusted until it is fixed: incorrect
-    or fragile behavior, a missed requirement, or maintainability damage you
-    would block a merge over — verbatim duplication of a logic block,
-    swallowed errors, tests that assert nothing. "Coverage could be broader"
-    and polish suggestions are Minor.
-    If the plan or brief explicitly mandates something this rubric calls a
-    defect (a test that asserts nothing, verbatim duplication of a logic
-    block), that IS a finding — report it as Important, labeled
-    plan-mandated. The plan's authorship does not grade its own work; the
-    human decides.
-    Acknowledge what was done well before listing issues — accurate praise
-    helps the implementer trust the rest of the feedback.
-
-    ## Output Format
-
-    ### Spec Compliance
-
-    - ✅ Spec compliant | ❌ Issues found: [what's missing/extra/misunderstood,
-      with file:line references]
-    - ⚠️ Cannot verify from diff: [requirements you could not verify from the
-      diff alone, and what the controller should check — report alongside the
-      ✅/❌ verdict for everything you could verify]
-
-    ### Strengths
-    [What's well done? Be specific.]
-
-    ### Issues
-
-    #### Critical (Must Fix)
-    #### Important (Should Fix)
-    #### Minor (Nice to Have)
-
-    For each issue: file:line, what's wrong, why it matters, how to fix
-    (if not obvious).
-
-    ### Assessment
-
-    **Task quality:** [Approved | Needs fixes]
-
-    **Reasoning:** [1-2 sentence technical assessment]
+Critical/Important findings block acceptance. A missing verification item cannot
+receive an unqualified clean verdict.
 ```
 
-**Placeholders:**
-- The reviewer model and reasoning setting are always `gpt-5.6-luna` and
-  `medium`, respectively, per SKILL.md Model Selection.
-- `[BRIEF_FILE]` — REQUIRED: the task brief file (`scripts/task-brief PLAN N`
-  prints the path; same file the implementer worked from)
-- `[GLOBAL_CONSTRAINTS]` — the binding requirements copied verbatim from
-  the plan's Global Constraints section or the spec: exact values, formats,
-  and stated relationships between components (not process rules — those
-  are already in this template)
-- `[REPORT_FILE]` — REQUIRED: the file the implementer wrote its detailed
-  report to
-- `[BASE_SHA]` — commit before this task
-- `[HEAD_SHA]` — current commit
-- `[DIFF_FILE]` — REQUIRED: the path the controller wrote the review
-  package to (`scripts/review-package BASE HEAD` prints the unique path it
-  wrote; the package never enters the controller's context)
-
-**Reviewer returns:** Spec Compliance verdict (✅/❌/⚠️), Strengths, Issues
-(Critical/Important/Minor), Task quality verdict
-
-A fix dispatch can address spec gaps and quality findings together;
-re-review after fixes covers both verdicts.
+For corrections, review the updated candidate and affected scope while retaining
+both verdicts. Verify covering tests/evidence correspond to the amended revision;
+do not treat the previous clean areas as permission to ignore regressions caused
+by the fix.
