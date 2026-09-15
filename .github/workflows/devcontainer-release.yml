@@ -141,6 +141,8 @@ jobs:
         run: |
           set -euo pipefail
 
+          short_sha="${GITHUB_SHA::12}"
+
           if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
             version="${GITHUB_REF_NAME#devcontainer-v}"
             if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -159,6 +161,7 @@ jobs:
 
             {
               echo 'names<<EOF'
+              echo "${IMAGE}:${short_sha}"
               echo "${IMAGE}:${version}"
               echo "${IMAGE}:${major}.${minor}"
               echo "${IMAGE}:${major}"
@@ -168,6 +171,7 @@ jobs:
           else
             {
               echo 'names<<EOF'
+              echo "${IMAGE}:${short_sha}"
               echo "${IMAGE}:edge"
               echo "${IMAGE}:latest"
               echo 'EOF'
