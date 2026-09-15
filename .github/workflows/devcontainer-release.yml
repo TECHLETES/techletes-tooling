@@ -116,6 +116,7 @@ jobs:
               echo "${IMAGE}:${version}"
               echo "${IMAGE}:${major}.${minor}"
               echo "${IMAGE}:${major}"
+              echo "${IMAGE}:latest"
               echo 'EOF'
             } >> "${GITHUB_OUTPUT}"
           else
