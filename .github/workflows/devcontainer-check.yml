@@ -46,6 +46,17 @@ jobs:
         run: |
           metadata="$(docker inspect techletes-devcontainer:test --format '{{ index .Config.Labels "devcontainer.metadata" }}')"
           test -n "${metadata}"
+
+          # Core runtime/features.
           grep -Fq 'ms-python.python' <<<"${metadata}"
           grep -Fq 'azure-cli' <<<"${metadata}"
           grep -Fq 'docker-outside-of-docker' <<<"${metadata}"
+
+          # Representative full-stack editor baseline.
+          grep -Fq 'ms-toolsai.jupyter' <<<"${metadata}"
+          grep -Fq 'biomejs.biome' <<<"${metadata}"
+          grep -Fq 'bradlc.vscode-tailwindcss' <<<"${metadata}"
+          grep -Fq 'ms-playwright.playwright' <<<"${metadata}"
+          grep -Fq 'mtxr.sqltools-driver-mysql' <<<"${metadata}"
+          grep -Fq 'mtxr.sqltools-driver-pg' <<<"${metadata}"
+          grep -Fq 'matthewpi.caddyfile-support' <<<"${metadata}"
