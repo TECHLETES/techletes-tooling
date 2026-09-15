@@ -103,25 +103,32 @@ jobs:
             fi
 
             {
-              echo 'args<<EOF'
-              echo "--image-name ${IMAGE}:${version}"
-              echo "--image-name ${IMAGE}:${major}.${minor}"
-              echo "--image-name ${IMAGE}:${major}"
+              echo 'names<<EOF'
+              echo "${IMAGE}:${version}"
+              echo "${IMAGE}:${major}.${minor}"
+              echo "${IMAGE}:${major}"
               echo 'EOF'
             } >> "${GITHUB_OUTPUT}"
           else
             {
-              echo 'args<<EOF'
-              echo "--image-name ${IMAGE}:edge"
+              echo 'names<<EOF'
+              echo "${IMAGE}:edge"
               echo 'EOF'
             } >> "${GITHUB_OUTPUT}"
           fi
 
       - name: Build and publish multi-platform image
         shell: bash
+        env:
+          IMAGE_NAMES: ${{ steps.tags.outputs.names }}
         run: |
           set -euo pipefail
-          mapfile -t image_args <<<"${{ steps.tags.outputs.args }}"
+
+          image_args=()
+          while IFS= read -r image_name; do
+            [[ -z "${image_name}" ]] || image_args+=(--image-name "${image_name}")
+          done <<<"${IMAGE_NAMES}"
+
           devcontainer build \
             --workspace-folder devcontainers/standard \
             --platform "linux/amd64,linux/arm64" \
