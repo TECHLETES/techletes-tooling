@@ -41,10 +41,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ env.BUILDX_CACHE_DIR }}
-          key: devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-${{ github.run_id }}-validate
+          key: devcontainer-buildx-${{ runner.os }}-amd64-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
           restore-keys: |
-            devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-
-            devcontainer-buildx-${{ runner.os }}-
+            devcontainer-buildx-${{ runner.os }}-amd64-
 
       - name: Build validation image
         shell: bash
@@ -113,14 +112,21 @@ jobs:
       - name: Install Dev Container CLI
         run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
 
-      - name: Restore BuildKit cache
+      - name: Restore multi-platform BuildKit cache
         uses: actions/cache@v4
         with:
           path: ${{ env.BUILDX_CACHE_DIR }}
-          key: devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-${{ github.run_id }}-publish
+          key: devcontainer-buildx-${{ runner.os }}-multiarch-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
           restore-keys: |
-            devcontainer-buildx-${{ runner.os }}-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}-
-            devcontainer-buildx-${{ runner.os }}-
+            devcontainer-buildx-${{ runner.os }}-multiarch-
+
+      - name: Restore validation cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILDX_CACHE_DIR }}-amd64
+          key: devcontainer-buildx-${{ runner.os }}-amd64-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
+          restore-keys: |
+            devcontainer-buildx-${{ runner.os }}-amd64-
 
       - name: Resolve image tags
         id: tags
@@ -178,6 +184,9 @@ jobs:
           )
           if [[ -f "${BUILDX_CACHE_DIR}/index.json" ]]; then
             cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}")
+          fi
+          if [[ -f "${BUILDX_CACHE_DIR}-amd64/index.json" ]]; then
+            cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}-amd64")
           fi
 
           devcontainer build \
