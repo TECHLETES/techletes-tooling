@@ -1,37 +1,45 @@
 # Techletes Superpowers
 
-Lean development workflows for Techletes coding agents. Start with the smallest
-workflow that resolves the task; use planning, delegation, and independent review
-where their cost is justified by uncertainty or impact.
+Lean software delivery workflows for Codex and other coding-agent hosts.
 
 ## Version 0.3.0
 
-The shared [model-routing policy](skills/subagent-driven-development/references/model-routing.md)
-replaces the fixed Luna-medium-for-everything rule. It keeps ordinary coordination
-on Terra medium, uses Luna medium/high/xhigh for increasingly difficult bounded
-work, and reserves Terra/Sol review and Sol planning for appropriate risks.
-These are tunable starting choices, not measured optimal settings.
+- Shared role-based model/effort routing instead of forcing every child to Luna
+  medium. Routine workers stay medium; substantive work uses high; bounded hard
+  problems can use xhigh. Independent review uses Terra high, with Sol high for
+  consequential planning/review. These are starting policies, not measured optima.
+- Sequential writers by default, compact file handoffs, focused correction reuse,
+  explicit escalation, revision-matched evidence, and risk-based review gates.
+- Resume-aware phase execution with explicit plan-only/one-phase/through-end
+  boundaries, scoped commits, and no repeated approval or delivery menus.
+- Native Codex roles and a non-destructive installer; legacy host definitions no
+  longer impose conflicting model, parallelism, or full-rewrite instructions.
 
-Plans specify outcomes, contracts, and acceptance criteria rather than a second
-copy of implementation code. Execution respects explicit one-phase/through-end
-approval, resumes from reconciled progress, reuses workers for corrections, and
-uses sequential writers by default. Reviews start from requirements and actual
-changes, with revision-matched validation evidence and proportionate gates.
+## Setup and entry points
 
-## Native Codex roles
+Install the plugin using the existing marketplace configuration. For executable
+Codex role settings, follow [Codex setup](codex/README.md): installing skills alone
+does not install those role files or turn this plugin's AGENTS.md into global
+instructions. Existing custom roles are never silently overwritten.
 
-See [Codex setup](codex/README.md). The included installer copies seven namespaced
-TOML roles without changing config.toml, AGENTS.md, credentials, or permissions.
-Existing customized roles are preserved unless explicitly replaced with backups.
-Plugin installation alone does not register these native roles. Legacy
-`agents/*.agent.md` files remain host-specific instructions, not Codex settings.
+Use [workflow selection](skills/using-superpowers/SKILL.md) for a new request,
+[planning](skills/writing-plans/SKILL.md) for coordinated changes, and
+[phased execution](skills/subagent-driven-development/SKILL.md) for approved work.
+The [routing policy](skills/subagent-driven-development/references/model-routing.md)
+is the shared source for role selection and escalation.
 
-## Verification
+Explicit user choices and project-specific constraints override the defaults.
+This release does not rewrite application-specific plans/runbooks or historical
+progress ledgers, change authentication/permissions, or merge any PR.
+
+## Validation
 
 ```bash
 uv run --no-project --python 3.11 -m unittest discover -s plugins/techletes-superpowers/tests -v
 ```
 
-Run from the tooling repository root. Tests cover configuration, installer safety,
-workflow contracts, and handoff scripts. They do not exercise paid model calls or
-prove the effective settings/account access of an installed Codex CLI.
+The offline tests exercise installer safety, role settings, documentation links,
+workflow entrypoints, and handoff scripts in temporary Git repositories. CI runs
+on Python 3.11 and 3.13. These checks do not measure model quality or prove that
+your local Codex version/account can load and run every role; perform the setup
+smoke test before relying on the runtime configuration.

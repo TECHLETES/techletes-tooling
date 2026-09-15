@@ -1,40 +1,56 @@
 #!/usr/bin/env bash
-# Extract one task's full text from an implementation plan into a file the
-# implementer reads in one call, so the task text never has to be pasted
-# through the controller's context.
-#
+# Extract a task to a file; stdout is only its path, diagnostics go to stderr.
 # Usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]
-# Default OUTFILE: <repo-root>/.superpowers/sdd/task-<N>-brief.md
-# (per worktree; concurrent runs in the same working tree share it).
 set -euo pipefail
 
 if [ $# -lt 2 ] || [ $# -gt 3 ]; then
   echo "usage: task-brief PLAN_FILE TASK_NUMBER [OUTFILE]" >&2
   exit 2
 fi
-
 plan=$1
 n=$2
 [ -f "$plan" ] || { echo "no such plan file: $plan" >&2; exit 2; }
-
+[[ "$n" =~ ^[1-9][0-9]*$ ]] || { echo "invalid task number: $n" >&2; exit 2; }
 if [ $# -eq 3 ]; then
   out=$3
 else
   dir=$("$(cd "$(dirname "$0")" && pwd)/sdd-workspace")
   out="$dir/task-${n}-brief.md"
 fi
+[ ! "$out" -ef "$plan" ] || { echo "output must not replace the plan" >&2; exit 2; }
+mkdir -p "$(dirname "$out")"
+out="$(cd "$(dirname "$out")" && pwd)/$(basename "$out")"
+tmp=$(mktemp "${out}.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
 
+# Ignore headings in fenced code and stop at the task's next peer/ancestor.
+# Global Constraints are intentionally supplied separately by the coordinator.
 awk -v n="$n" '
-  /^```/ { infence = !infence }
-  !infence && /^#+[ \t]+Task[ \t]+[0-9]+/ {
-    intask = ($0 ~ ("^#+[ \t]+Task[ \t]+" n "([^0-9]|$)"))
+  {
+    line = $0
+    sub(/^[ \t]*/, "", line)
+    if (line ~ /^```/ || line ~ /^~~~/) {
+      char = substr(line, 1, 1)
+      run = 0
+      while (substr(line, run + 1, 1) == char) run++
+      if (!fence) { fence = run; fencechar = char }
+      else if (char == fencechar && run >= fence && substr(line, run + 1) ~ /^[ \t]*$/) fence = 0
+      if (active) print
+      next
+    }
+    if (!fence && /^#+[ \t]+/) {
+      match($0, /^#+/)
+      depth = RLENGTH
+      if (active && depth <= taskdepth) exit
+      if ($0 ~ ("^#+[ \t]+Task[ \t]+" n "([^0-9]|$)")) {
+        active = 1
+        taskdepth = depth
+      }
+    }
+    if (active) print
   }
-  intask { print }
-' "$plan" > "$out"
-
-if [ ! -s "$out" ]; then
-  echo "task ${n} not found in ${plan} (no heading matching 'Task ${n}')" >&2
-  exit 3
-fi
-
-echo "wrote ${out}: $(wc -l < "$out" | tr -d ' ') lines"
+' "$plan" > "$tmp"
+[ -s "$tmp" ] || { echo "task ${n} not found in ${plan}" >&2; exit 3; }
+mv "$tmp" "$out"
+printf '%s\n' "$out"
+printf 'wrote %s: %s lines\n' "$out" "$(wc -l < "$out" | tr -d ' ')" >&2
