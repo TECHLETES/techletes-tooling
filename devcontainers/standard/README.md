@@ -200,9 +200,9 @@ Breaking changes to language/runtime majors, removal of a shared tool, or incomp
 
 The Dockerfile keeps independently versioned tools in separate layers and places Codex as the final root-owned install layer. With a warm BuildKit cache, changing only `CODEX_VERSION` can therefore reuse the base OS, database clients, 1Password, Node, Bun, uv, and shared setup layers; only the Codex install and final metadata need rebuilding.
 
-GitHub Actions persists the BuildKit cache between devcontainer workflow runs with `actions/cache`. The cache key tracks the files that affect the image build (`Dockerfile`, `.dockerignore`, `.devcontainer/`, and `scripts/`) and falls back to the latest compatible Linux cache when the exact source state is new. Each build exports a fresh `mode=max` local BuildKit cache so intermediate feature/image layers remain reusable.
+GitHub Actions persists BuildKit `mode=max` local caches with `actions/cache`. Cache keys are content-addressed by the files that affect the image build (`Dockerfile`, `.dockerignore`, `.devcontainer/`, and `scripts/`), so repeated workflow runs for the same build inputs reuse one cache object rather than producing a full duplicate per run. New build-input states fall back to the most recent compatible cache for the same platform.
 
-The release workflow also shares this cache between its jobs: the amd64 validation build warms the cache first, then the multi-platform publish job restores it. The publish job still has to build architecture-specific arm64 layers that are not already cached.
+The release workflow maintains separate amd64 and multi-platform caches. The validation job populates the current amd64 cache. The publish job restores both the latest multi-platform cache and the current validation cache, allowing it to reuse prior arm64 work as well as layers just validated for amd64 before exporting the new multi-platform cache.
 
 The cache is an optimization only. A cold or evicted cache must still produce the same validated image, and release correctness must never depend on a prior cached layer existing.
 
