@@ -123,6 +123,7 @@ jobs:
             {
               echo 'names<<EOF'
               echo "${IMAGE}:edge"
+              echo "${IMAGE}:latest"
               echo 'EOF'
             } >> "${GITHUB_OUTPUT}"
           fi
