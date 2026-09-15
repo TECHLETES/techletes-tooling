@@ -22,6 +22,7 @@ concurrency:
 env:
   IMAGE: ghcr.io/techletes/devcontainer
   DEVCONTAINER_CLI_VERSION: 0.89.0
+  BUILDX_CACHE_DIR: /tmp/.buildx-cache
 
 jobs:
   validate:
@@ -36,12 +37,40 @@ jobs:
       - name: Install Dev Container CLI
         run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
 
+      - name: Restore BuildKit cache
+        id: buildx-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BUILDX_CACHE_DIR }}
+          key: devcontainer-buildx-${{ runner.os }}-amd64-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
+          restore-keys: |
+            devcontainer-buildx-${{ runner.os }}-amd64-
+
       - name: Build validation image
+        shell: bash
+        env:
+          BUILDX_CACHE_HIT: ${{ steps.buildx-cache.outputs.cache-hit }}
         run: |
+          set -euo pipefail
+
+          cache_args=()
+          if [[ -f "${BUILDX_CACHE_DIR}/index.json" ]]; then
+            cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}")
+          fi
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            cache_args+=(--cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max")
+          fi
+
           devcontainer build \
             --workspace-folder devcontainers/standard \
             --platform linux/amd64 \
-            --image-name techletes-devcontainer:release-check
+            --image-name techletes-devcontainer:release-check \
+            "${cache_args[@]}"
+
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            rm -rf "${BUILDX_CACHE_DIR}"
+            mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
+          fi
 
       - name: Verify shared toolchain
         run: |
@@ -89,6 +118,23 @@ jobs:
       - name: Install Dev Container CLI
         run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
 
+      - name: Restore multi-platform BuildKit cache
+        id: buildx-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BUILDX_CACHE_DIR }}
+          key: devcontainer-buildx-${{ runner.os }}-multiarch-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
+          restore-keys: |
+            devcontainer-buildx-${{ runner.os }}-multiarch-
+
+      - name: Restore validation cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILDX_CACHE_DIR }}-amd64
+          key: devcontainer-buildx-${{ runner.os }}-amd64-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
+          restore-keys: |
+            devcontainer-buildx-${{ runner.os }}-amd64-
+
       - name: Resolve image tags
         id: tags
         shell: bash
@@ -132,6 +178,7 @@ jobs:
         shell: bash
         env:
           IMAGE_NAMES: ${{ steps.tags.outputs.names }}
+          BUILDX_CACHE_HIT: ${{ steps.buildx-cache.outputs.cache-hit }}
         run: |
           set -euo pipefail
 
@@ -140,8 +187,25 @@ jobs:
             [[ -z "${image_name}" ]] || image_args+=(--image-name "${image_name}")
           done <<<"${IMAGE_NAMES}"
 
+          cache_args=()
+          if [[ -f "${BUILDX_CACHE_DIR}/index.json" ]]; then
+            cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}")
+          fi
+          if [[ -f "${BUILDX_CACHE_DIR}-amd64/index.json" ]]; then
+            cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}-amd64")
+          fi
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            cache_args+=(--cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max")
+          fi
+
           devcontainer build \
             --workspace-folder devcontainers/standard \
             --platform "linux/amd64,linux/arm64" \
             --push true \
-            "${image_args[@]}"
+            "${image_args[@]}" \
+            "${cache_args[@]}"
+
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            rm -rf "${BUILDX_CACHE_DIR}"
+            mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
+          fi

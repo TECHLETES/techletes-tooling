@@ -1,9 +1,6 @@
 FROM mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
 
 ARG USERNAME=vscode
-ARG NODE_MAJOR=22
-ARG BUN_VERSION=1.4.2
-ARG CODEX_VERSION=0.154.0
 
 LABEL org.opencontainers.image.source="https://github.com/TECHLETES/techletes-tooling" \
       org.opencontainers.image.description="Shared Techletes development container"
@@ -57,17 +54,20 @@ RUN curl -fsSL https://downloads.1password.com/linux/keys/1password.asc \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends 1password-cli \
     && rm -rf /var/lib/apt/lists/*
 
-# Node is needed by the frontend toolchain and Codex CLI. Bun and Codex are
-# explicitly versioned so rebuilding a release cannot silently upgrade them.
+# Keep independently versioned developer tools in separate layers so a frequent
+# Codex-only bump can reuse the expensive OS, database, and Node layers.
+ARG NODE_MAJOR=22
 RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends nodejs \
-    && npm install --global "bun@${BUN_VERSION}" "@openai/codex@${CODEX_VERSION}" \
     && node --version \
-    && bun --version \
-    && codex --version \
-    && npm cache clean --force \
+    && npm --version \
     && rm -rf /var/lib/apt/lists/*
+
+ARG BUN_VERSION=1.4.2
+RUN npm install --global "bun@${BUN_VERSION}" \
+    && bun --version \
+    && npm cache clean --force
 
 # uv comes from its versioned official image rather than a mutable install
 # script. This COPY is multi-architecture when the parent build is multi-arch.
@@ -86,5 +86,13 @@ RUN chmod 0755 /usr/local/bin/techletes-dev /usr/local/share/techletes/verify-im
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     TZ=Europe/Amsterdam
+
+# Codex changes more frequently than the rest of the shared toolchain. Keep it
+# as the final root-owned build layer so changing only CODEX_VERSION rebuilds
+# almost nothing else when a BuildKit cache is available.
+ARG CODEX_VERSION=0.154.0
+RUN npm install --global "@openai/codex@${CODEX_VERSION}" \
+    && codex --version \
+    && npm cache clean --force
 
 USER ${USERNAME}

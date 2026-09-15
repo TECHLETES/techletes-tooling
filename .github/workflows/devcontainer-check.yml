@@ -15,6 +15,10 @@ concurrency:
   group: devcontainer-check-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+env:
+  DEVCONTAINER_CLI_VERSION: 0.89.0
+  BUILDX_CACHE_DIR: /tmp/.buildx-cache
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
@@ -26,14 +30,42 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Install Dev Container CLI
-        run: npm install --global @devcontainers/cli@0.89.0
+        run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
+
+      - name: Restore BuildKit cache
+        id: buildx-cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.BUILDX_CACHE_DIR }}
+          key: devcontainer-buildx-${{ runner.os }}-amd64-${{ hashFiles('devcontainers/standard/Dockerfile', 'devcontainers/standard/.dockerignore', 'devcontainers/standard/.devcontainer/**', 'devcontainers/standard/scripts/**') }}
+          restore-keys: |
+            devcontainer-buildx-${{ runner.os }}-amd64-
 
       - name: Build shared devcontainer
+        shell: bash
+        env:
+          BUILDX_CACHE_HIT: ${{ steps.buildx-cache.outputs.cache-hit }}
         run: |
+          set -euo pipefail
+
+          cache_args=()
+          if [[ -f "${BUILDX_CACHE_DIR}/index.json" ]]; then
+            cache_args+=(--cache-from "type=local,src=${BUILDX_CACHE_DIR}")
+          fi
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            cache_args+=(--cache-to "type=local,dest=${BUILDX_CACHE_DIR}-new,mode=max")
+          fi
+
           devcontainer build \
             --workspace-folder devcontainers/standard \
             --platform linux/amd64 \
-            --image-name techletes-devcontainer:test
+            --image-name techletes-devcontainer:test \
+            "${cache_args[@]}"
+
+          if [[ "${BUILDX_CACHE_HIT}" != "true" ]]; then
+            rm -rf "${BUILDX_CACHE_DIR}"
+            mv "${BUILDX_CACHE_DIR}-new" "${BUILDX_CACHE_DIR}"
+          fi
 
       - name: Verify shared toolchain
         run: |
