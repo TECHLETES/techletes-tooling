@@ -94,7 +94,7 @@ class InstallerTests(unittest.TestCase):
         shutil.copytree(ROLES, source)
         (source / "techletes-worker.toml").write_text("not valid toml")
         with self.assertRaises(ValueError):
-            INSTALLER.install(source, self.dest)
+            INSTALLER.install(ROLES, self.dest)
         self.assertFalse(self.dest.exists())
 
     def test_symlink_target_is_not_followed(self):
@@ -209,6 +209,53 @@ class WorkflowContractTests(unittest.TestCase):
             row = f"| `{role['name']}` | `{role['model']}` | `{role['model_reasoning_effort']}` |"
             self.assertIn(row, policy, path.name)
 
+    def test_critical_guardrails_are_explicit(self):
+        implementer = (PLUGIN / "skills/subagent-driven-development/implementer-prompt.md").read_text()
+        for phrase in (
+            "multiple materially different architecture choices",
+            "requirements/tests disagree",
+            "Before handoff, self-review the actual diff",
+            "tests are not passing merely because everything is mocked",
+            "a focused correction reproduces the same failure without new evidence",
+        ):
+            self.assertIn(phrase, implementer)
+
+        task_review = (PLUGIN / "skills/subagent-driven-development/task-reviewer-prompt.md").read_text()
+        for phrase in (
+            "Spec compliance",
+            "Security/trust boundaries",
+            "Interfaces/compatibility",
+            "Tests: changed observable behavior",
+            "Critical/Important findings block acceptance",
+        ):
+            self.assertIn(phrase, task_review)
+
+        whole_review = (PLUGIN / "skills/requesting-code-review/code-reviewer.md").read_text()
+        for phrase in (
+            "Architecture and integration",
+            "Security and data safety",
+            "Compatibility and production readiness",
+            "Testing and evidence",
+            "Review approval does not authorize a merge",
+        ):
+            self.assertIn(phrase, whole_review)
+
+        planning = (PLUGIN / "skills/writing-plans/SKILL.md").read_text()
+        for phrase in (
+            "Plan completeness guardrails",
+            "TBD",
+            "acceptance criteria that cannot be observed",
+            "Interface consistency",
+            "Validation feasibility",
+        ):
+            self.assertIn(phrase, planning)
+
+        finishing = (PLUGIN / "skills/finishing-a-development-branch/SKILL.md").read_text()
+        git_safety = (PLUGIN / "skills/finishing-a-development-branch/references/git-safety.md").read_text()
+        self.assertIn("git-safety.md", finishing)
+        for phrase in ("requires an explicit confirmation", "git worktree remove", "--force-with-lease"):
+            self.assertIn(phrase, git_safety)
+
     def test_changed_workflow_entrypoints_and_local_links(self):
         import re
         names = ("subagent-driven-development", "writing-plans", "executing-plans",
@@ -220,12 +267,13 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertRegex(text, rf"\A---\nname: {re.escape(path.parent.name)}\ndescription: [^\n]+\n---")
             self.assertLess(len(text.splitlines()), 500, str(path))
             self.assertNotIn("Every subagent MUST use", text)
-        paths += [PLUGIN / "AGENTS.md", PLUGIN / "codex/README.md",
-                  PLUGIN / "skills/subagent-driven-development/references/model-routing.md"]
+        paths += [PLUGIN / "AGENTS.md", PLUGIN / "codex/README.md"]
         paths += list((PLUGIN / "agents").glob("*.agent.md"))
         paths += list((PLUGIN / "skills/subagent-driven-development").glob("*-prompt.md"))
+        paths += list((PLUGIN / "skills/subagent-driven-development/references").glob("*.md"))
         paths += [PLUGIN / "skills/requesting-code-review/code-reviewer.md",
                   PLUGIN / "skills/using-superpowers/references/codex-tools.md"]
+        paths += list((PLUGIN / "skills/finishing-a-development-branch/references").glob("*.md"))
         for path in paths:
             for target in re.findall(r"(?<!!)\[[^\]]+\]\(([^)]+)\)", path.read_text()):
                 if "://" in target or target.startswith("#"):
