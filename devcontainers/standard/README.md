@@ -27,7 +27,27 @@ The initial image deliberately follows the existing Techletes Python/full-stack 
 - Redis CLI
 - common diagnostics such as `jq`, `ripgrep`, `lsof`, `iproute2`, `netcat`, `socat`, `procps`, and SSH client tooling
 
-The image also embeds shared Dev Container metadata: common VS Code extensions/settings, the `vscode` remote user, Amsterdam timezone, uv/pre-commit environment defaults, and reusable cache volumes.
+The image also embeds the shared Techletes full-stack Dev Container metadata: the `vscode` remote user, Amsterdam timezone, uv/pre-commit environment defaults, reusable cache volumes, and the editor extensions/settings used by the current full-stack repositories.
+
+### Shared VS Code baseline
+
+The shared image intentionally carries the full common Techletes editor baseline rather than only Python tooling. It includes:
+
+- Python, Pylance, mypy, Ruff, Black, debugpy, and Jupyter
+- both Docker editor integrations currently used by Techletes repositories
+- GitHub Actions and GitHub Pull Requests
+- OpenAI ChatGPT/Codex integration
+- TOML, YAML, and shell tooling
+- Biome and ESLint
+- Tailwind CSS and Playwright
+- SQLTools with MySQL/MariaDB, PostgreSQL, and SQLite drivers
+- Microsoft PostgreSQL tooling
+- Office/document viewing
+- Caddyfile support
+
+JavaScript, JSX, TypeScript, and TSX use the same Biome-on-save defaults as the current Techletes full-stack template, with `biome.requireConfiguration` enabled so repositories are expected to opt in through their committed Biome configuration. Python keeps Black as formatter and Ruff for fixes/import organization.
+
+Consuming repositories can still add extensions and override settings locally. The goal is that a normal Techletes full-stack repository does not need to repeat the standard extension list.
 
 ## Boundaries
 
@@ -97,12 +117,7 @@ Repository configuration is merged with the metadata embedded in the prebuilt im
 
 ## Project-specific extensions
 
-The shared image includes the core Python, Docker, GitHub, YAML, shell, and Codex editor extensions. Add specialized extensions in the consuming repository, for example:
-
-- Biome/Tailwind/Playwright for frontend applications
-- Jupyter for notebook-heavy projects
-- Caddy support where Caddyfiles are edited
-- PostgreSQL/SQLTools extensions where developers actively use them
+The shared image already includes the normal Python and full-stack editor stack. Repositories should add only genuine exceptions, for example a framework-specific extension, a nonstandard language toolchain, or a project-specific database/client integration not already covered by the shared baseline.
 
 ## Project bootstrap
 
@@ -170,7 +185,7 @@ Breaking changes to language/runtime majors, removal of a shared tool, or incomp
 
 ## CI and release
 
-Pull requests changing the shared image run `.github/workflows/devcontainer-check.yml`. It builds through Dev Container CLI 0.89.0 so Features are actually preinstalled and their metadata is embedded in the resulting image. CI then verifies the expected toolchain and `devcontainer.metadata` label.
+Pull requests changing the shared image run `.github/workflows/devcontainer-check.yml`. It builds through Dev Container CLI 0.89.0 so Features are actually preinstalled and their metadata is embedded in the resulting image. CI then verifies the expected toolchain and `devcontainer.metadata` label, including representative full-stack extensions.
 
 `.github/workflows/devcontainer-release.yml` validates first and publishes multi-platform `linux/amd64` + `linux/arm64` images. Pushes to `main` publish `edge`; a `devcontainer-vX.Y.Z` tag publishes stable semantic tags. Stable tags refuse to overwrite an existing exact version.
 
