@@ -65,9 +65,9 @@ Credentials must remain explicit at repository/user level. Do not add credential
 
 ## Consuming the image
 
-### Floating current stable
+### Floating latest
 
-Repositories that intentionally follow the newest stable Techletes environment can use:
+Repositories that intentionally follow the newest validated Techletes environment can use:
 
 ```json
 {
@@ -78,7 +78,7 @@ Repositories that intentionally follow the newest stable Techletes environment c
 }
 ```
 
-`latest` is updated only by a stable `devcontainer-vX.Y.Z` release. Pushes to `main` publish `edge`, not `latest`.
+`latest` is updated after the release workflow validates a shared-image change on `main`. Stable `devcontainer-vX.Y.Z` releases also point `latest` at that released image.
 
 ### Exact version
 
@@ -192,7 +192,7 @@ ghcr.io/techletes/devcontainer:1
 ghcr.io/techletes/devcontainer:latest
 ```
 
-The exact semantic version is immutable by policy. Major/minor aliases and `latest` are convenience pointers. `latest` means the newest explicitly released stable image; `edge` is rebuilt from `main` and is only for validation/early adoption.
+A validated shared-image change merged to `main` publishes both `edge` and `latest`. `latest` is therefore the normal floating Techletes baseline. `edge` is retained as an explicit current-main alias, while exact semantic versions remain immutable by policy.
 
 Breaking changes to language/runtime majors, removal of a shared tool, or incompatible metadata behavior require a major version bump. Normal tool upgrades use minor releases; fixes use patch releases.
 
@@ -200,7 +200,7 @@ Breaking changes to language/runtime majors, removal of a shared tool, or incomp
 
 Pull requests changing the shared image run `.github/workflows/devcontainer-check.yml`. It builds through Dev Container CLI 0.89.0 so Features are actually preinstalled and their metadata is embedded in the resulting image. CI then verifies the expected toolchain and `devcontainer.metadata` label, including representative full-stack extensions.
 
-`.github/workflows/devcontainer-release.yml` validates first and publishes multi-platform `linux/amd64` + `linux/arm64` images. Pushes to `main` publish `edge`; a `devcontainer-vX.Y.Z` tag publishes the exact stable version, major/minor aliases, and `latest`. Exact stable version tags refuse overwrite.
+`.github/workflows/devcontainer-release.yml` validates first and publishes multi-platform `linux/amd64` + `linux/arm64` images. Pushes to `main` publish `edge` and `latest`; a `devcontainer-vX.Y.Z` tag additionally publishes the exact stable version and major/minor aliases. Exact stable version tags refuse overwrite.
 
 The first GHCR package publication may require a one-time package visibility decision in GitHub. Make the package public if anonymous pulls are required. If the package remains private, developers must authenticate Docker to GHCR before VS Code can pull the devcontainer image.
 
@@ -209,8 +209,8 @@ The first GHCR package publication may require a one-time package visibility dec
 1. Change the pinned versions in `Dockerfile` and/or `.devcontainer/devcontainer.json`.
 2. Update `CHANGELOG.md`.
 3. Let the PR image checks pass.
-4. Merge to `main` and validate the automatically published `edge` image.
-5. Create a `devcontainer-vX.Y.Z` tag from the tested `main` commit; this promotes the release to the semantic aliases and `latest`.
+4. Merge to `main`; the validated image becomes `edge` and `latest`.
+5. Optionally create a `devcontainer-vX.Y.Z` tag from the tested `main` commit when an immutable release is desired.
 6. Rebuild repositories following `latest`, or migrate exact-version consumers with normal PRs.
 
 Do not modify an existing exact semantic tag.
