@@ -10,6 +10,11 @@ action, and report evidence. Do not add a delivery menu when the user already
 requested a PR, a local merge, or keeping the branch. Ask only when that choice
 is genuinely missing. A request to open a PR does not authorize merging it.
 
+Before any local merge, discard, worktree cleanup, branch deletion, or history
+rewrite/restack, read and follow [git-safety.md](references/git-safety.md). Keep
+those deterministic safeguards even when the higher-level delivery choice is
+already authorized.
+
 ## Verify the final candidate
 
 Inspect status and the actual diff, including untracked/deleted files and any
@@ -69,15 +74,15 @@ git push -u origin <feature-branch>
 gh pr create --base <actual-base> --head <feature-branch>
 ```
 
-**Merge locally:** only when explicitly selected, update the base without
-clobbering work, merge the feature branch, and verify the integrated result.
-Cleanup is allowed only after successful merge and verification.
+**Merge locally:** only when explicitly selected. Follow the exact local-merge
+sequence in [git-safety.md](references/git-safety.md), verify the integrated
+result, and clean up only after successful verification.
 
 **Keep:** report branch, revision, and workspace; leave them intact.
 
-**Discard:** show the exact branch, commits, and files/worktree that would be
-lost, and require explicit confirmation for that deletion. Never infer discard
-permission from a request to finish, clean up, or create a PR.
+**Discard:** follow the explicit-impact and confirmation procedure in
+[git-safety.md](references/git-safety.md). Never infer discard permission from a
+request to finish, clean up, or create a PR.
 
 Use an authorized GitHub connector if gh is unavailable; describe actual
 capability limitations instead of inventing CLI execution.
@@ -90,29 +95,20 @@ stack. While both PRs are reviewed, merge parent updates into the child instead
 of repeatedly rebasing reviewed history.
 
 After the parent merges, fetch the actual integration branch and recompute the
-child range. A merge preserving parent commits may need only retargeting. After
-a squash merge, replay only child-specific commits:
+child range. A merge preserving parent commits may need only retargeting. For a
+squash-merged parent or any history rewrite, follow the verified-boundary and
+`--force-with-lease` procedure in [git-safety.md](references/git-safety.md).
 
-```bash
-git rebase --onto origin/<integration-branch> <verified-parent-tip> <child-branch>
-git push --force-with-lease
-gh pr edit --base <integration-branch>
-```
-
-Record/verify the parent's tip before its branch disappears; do not guess the
-boundary or use an unrelated newer parent tip. Validate the new diff and rerun
-checks affected by restacking. Never use plain --force. Limit history rewriting
-to a deliberate post-parent restack or explicit authorization.
+Validate the new diff and rerun checks affected by restacking before claiming the
+child PR is ready.
 
 ## Cleanup and report
 
-A directory named `.worktrees/` does not prove ownership. Remove only a worktree
-this run demonstrably created, when cleanup was authorized and needed after a
-successful local merge or explicitly confirmed discard. Never remove a
-host-managed or pre-existing workspace. Check for user/dirty work first. Leave
-PR and keep-as-is worktrees intact.
+Only clean up a worktree this run demonstrably owns, and only when the chosen
+action no longer needs it. Follow [git-safety.md](references/git-safety.md) for
+status checks, moving outside the worktree, removal order, pruning, and branch
+deletion. Never force cleanup through user changes or remove a host-managed,
+pre-existing, or ownership-ambiguous workspace.
 
-Move outside an owned worktree before removal, remove it before deleting its
-branch, and never use forced removal to bypass uncommitted changes. Report what
-changed, validation actually performed, limitations, and the resulting PR or
-handoff. Do not claim a remote action succeeded without its returned result.
+Report what changed, validation actually performed, limitations, and the resulting
+PR or handoff. Do not claim a remote action succeeded without its returned result.
