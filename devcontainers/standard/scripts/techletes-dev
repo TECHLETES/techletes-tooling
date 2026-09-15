@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: techletes-dev <command>
+
+Commands:
+  doctor      Check the shared Techletes development toolchain.
+  versions    Print important tool versions.
+  git-setup   Apply Techletes repository-local Git defaults and host identity.
+EOF
+}
+
+versions() {
+  python --version
+  uv --version
+  node --version
+  npm --version
+  bun --version
+  codex --version
+  git --version
+  gh --version | head -n 1
+  az --version | head -n 1
+  docker --version
+  docker compose version
+  psql --version
+  mariadb --version
+  redis-cli --version
+  op --version
+}
+
+doctor() {
+  local failed=0
+  local commands=(python uv node npm bun codex git gh az docker psql mariadb redis-cli op odbcinst mariadb_config)
+
+  for command_name in "${commands[@]}"; do
+    if command -v "${command_name}" >/dev/null 2>&1; then
+      printf 'OK   %s\n' "${command_name}"
+    else
+      printf 'MISS %s\n' "${command_name}" >&2
+      failed=1
+    fi
+  done
+
+  if command -v docker >/dev/null 2>&1; then
+    if docker compose version >/dev/null 2>&1; then
+      echo 'OK   docker compose'
+    else
+      echo 'MISS docker compose' >&2
+      failed=1
+    fi
+  fi
+
+  if command -v odbcinst >/dev/null 2>&1; then
+    if odbcinst -q -d 2>/dev/null | grep -qi 'mariadb'; then
+      echo 'OK   MariaDB ODBC driver'
+    else
+      echo 'MISS MariaDB ODBC driver' >&2
+      failed=1
+    fi
+  fi
+
+  if [[ ${failed} -ne 0 ]]; then
+    echo 'Shared development toolchain check failed.' >&2
+    return 1
+  fi
+
+  echo 'Shared development toolchain check passed.'
+}
+
+git_setup() {
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    echo 'git-setup must be run inside a Git worktree.' >&2
+    return 1
+  fi
+
+  git config --local pull.rebase false
+  git config --local branch.autosetuprebase never
+
+  if [[ -f /tmp/host-gitconfig ]]; then
+    local host_name host_email
+    host_name="$(git config --file /tmp/host-gitconfig --get user.name || true)"
+    host_email="$(git config --file /tmp/host-gitconfig --get user.email || true)"
+
+    [[ -z "${host_name}" ]] || git config --local user.name "${host_name}"
+    [[ -z "${host_email}" ]] || git config --local user.email "${host_email}"
+  fi
+
+  if command -v gh >/dev/null 2>&1; then
+    gh auth setup-git >/dev/null 2>&1 || true
+  fi
+
+  echo 'Applied Techletes repository-local Git defaults.'
+}
+
+case "${1:-doctor}" in
+  doctor)
+    doctor
+    ;;
+  versions)
+    versions
+    ;;
+  git-setup)
+    git_setup
+    ;;
+  -h|--help|help)
+    usage
+    ;;
+  *)
+    usage >&2
+    exit 2
+    ;;
+esac

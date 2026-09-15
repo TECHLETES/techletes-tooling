@@ -1,0 +1,145 @@
+name: Publish shared devcontainer
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "devcontainer-v*.*.*"
+    paths:
+      - "devcontainers/standard/**"
+      - ".github/workflows/devcontainer-release.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: devcontainer-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  IMAGE: ghcr.io/techletes/devcontainer
+  DEVCONTAINER_CLI_VERSION: 0.89.0
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Install Dev Container CLI
+        run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
+
+      - name: Build validation image
+        run: |
+          devcontainer build \
+            --workspace-folder devcontainers/standard \
+            --platform linux/amd64 \
+            --image-name techletes-devcontainer:release-check
+
+      - name: Verify shared toolchain
+        run: |
+          docker run --rm \
+            --entrypoint /bin/bash \
+            techletes-devcontainer:release-check \
+            -lc /usr/local/share/techletes/verify-image.sh
+
+      - name: Verify embedded metadata
+        run: |
+          metadata="$(docker inspect techletes-devcontainer:release-check --format '{{ index .Config.Labels "devcontainer.metadata" }}')"
+          test -n "${metadata}"
+
+          grep -Fq 'ms-python.python' <<<"${metadata}"
+          grep -Fq 'azure-cli' <<<"${metadata}"
+          grep -Fq 'docker-outside-of-docker' <<<"${metadata}"
+          grep -Fq 'ms-toolsai.jupyter' <<<"${metadata}"
+          grep -Fq 'biomejs.biome' <<<"${metadata}"
+          grep -Fq 'bradlc.vscode-tailwindcss' <<<"${metadata}"
+          grep -Fq 'ms-playwright.playwright' <<<"${metadata}"
+          grep -Fq 'mtxr.sqltools-driver-mysql' <<<"${metadata}"
+          grep -Fq 'mtxr.sqltools-driver-pg' <<<"${metadata}"
+          grep -Fq 'matthewpi.caddyfile-support' <<<"${metadata}"
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Dev Container CLI
+        run: npm install --global @devcontainers/cli@${DEVCONTAINER_CLI_VERSION}
+
+      - name: Resolve image tags
+        id: tags
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            version="${GITHUB_REF_NAME#devcontainer-v}"
+            if [[ ! "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "Invalid devcontainer release tag: ${GITHUB_REF_NAME}" >&2
+              exit 1
+            fi
+
+            major="${version%%.*}"
+            remainder="${version#*.}"
+            minor="${remainder%%.*}"
+
+            if docker manifest inspect "${IMAGE}:${version}" >/dev/null 2>&1; then
+              echo "Exact image ${IMAGE}:${version} already exists; refusing to overwrite it." >&2
+              exit 1
+            fi
+
+            {
+              echo 'names<<EOF'
+              echo "${IMAGE}:${version}"
+              echo "${IMAGE}:${major}.${minor}"
+              echo "${IMAGE}:${major}"
+              echo 'EOF'
+            } >> "${GITHUB_OUTPUT}"
+          else
+            {
+              echo 'names<<EOF'
+              echo "${IMAGE}:edge"
+              echo 'EOF'
+            } >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Build and publish multi-platform image
+        shell: bash
+        env:
+          IMAGE_NAMES: ${{ steps.tags.outputs.names }}
+        run: |
+          set -euo pipefail
+
+          image_args=()
+          while IFS= read -r image_name; do
+            [[ -z "${image_name}" ]] || image_args+=(--image-name "${image_name}")
+          done <<<"${IMAGE_NAMES}"
+
+          devcontainer build \
+            --workspace-folder devcontainers/standard \
+            --platform "linux/amd64,linux/arm64" \
+            --push true \
+            "${image_args[@]}"
