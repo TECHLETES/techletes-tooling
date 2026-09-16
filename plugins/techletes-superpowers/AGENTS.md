@@ -47,8 +47,20 @@ re-run affected checks after fixes. Do not repeat full suites at every small
 step, or call stale results proof of a new revision. Report unavailable checks.
 
 Use `uv` for Python and `bun` for JavaScript/TypeScript unless the project already
-uses another manager. Prefer existing project scripts, `rg`, and `fd`. Check
-external documentation when API behavior, versions, security, or uncertainty
+uses another manager. Prefer existing project scripts, `rg`, and `fd`.
+
+For codebase search and orientation, **always use the Graphify skill first**.
+This includes questions about where behavior lives, how a feature works,
+architecture, dependencies, file relationships, cross-cutting flows, or which
+files should change. If `graphify-out/` already exists, query/update that graph
+before broad `rg`/grep or multi-file reads. If it does not exist, invoke Graphify
+for the relevant repository/path before doing a broad codebase search. After
+Graphify has provided the structural context, use `rg`, `fd`, and direct file
+reads for precise symbol/string lookups and verification. The only exceptions
+are a genuinely exact known-file/known-symbol lookup or an explicit instruction
+not to use Graphify.
+
+Check external documentation when API behavior, versions, security, or uncertainty
 make it material; do not research familiar syntax on every edit.
 
 ## GitHub workflow
