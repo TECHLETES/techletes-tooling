@@ -2,8 +2,11 @@
 
 Lean software delivery workflows for Codex and other coding-agent hosts.
 
-## Version 0.3.0
+## Version 0.3.1
 
+- Codex workflows now explicitly require the V2 subagent interface with both
+  `multi_agent = true` and `multi_agent_v2 = true`; restart Codex and start a
+  new session after changing the feature flags.
 - Shared role-based model/effort routing instead of forcing every child to Luna
   medium. Routine workers stay medium; substantive work uses high; bounded hard
   problems can use xhigh. Independent review uses Terra high, with Sol high for
