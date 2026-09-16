@@ -3,12 +3,15 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Usage: techletes-dev <command>
+Usage: techletes-dev <command> [profile]
 
 Commands:
-  doctor      Check the shared Techletes development toolchain.
-  versions    Print important tool versions.
-  git-setup   Apply Techletes repository-local Git defaults and host identity.
+  doctor                    Check the shared Techletes development toolchain.
+  versions                  Print important tool versions.
+  git-setup                 Apply Techletes repository-local Git defaults and host identity.
+  post-create <profile>     Run the standard workspace bootstrap profile.
+                            Profiles: python, full-stack
+  post-attach               Refresh the Techletes Codex plugin for an attached workspace.
 EOF
 }
 
@@ -94,6 +97,71 @@ git_setup() {
   echo 'Applied Techletes repository-local Git defaults.'
 }
 
+post_create_common() {
+  echo 'Bootstrapping the container workspace with uv...'
+  uv sync --locked
+  uv tool install graphifyy
+
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    uv run pre-commit install --install-hooks
+  fi
+
+  if ! uv run python -c "import ipykernel" >/dev/null 2>&1; then
+    echo 'Notebook execution uses the local Python environment and needs ipykernel available there.'
+  fi
+
+  if command -v op >/dev/null 2>&1; then
+    echo "1Password CLI detected. Run 'op account list' if you need secret-backed examples."
+  fi
+
+  git_setup
+
+  echo 'For Windows contributors, keep this repo inside the WSL filesystem before reopening it in the container for the best bind-mount performance.'
+}
+
+post_create() {
+  local profile="${1:-}"
+
+  case "${profile}" in
+    python)
+      post_create_common
+      ;;
+    full-stack)
+      sudo install -d -o "$(id -u)" -g "$(id -g)" /app/uploads
+      echo 'Ensured /app/uploads exists for local file storage.'
+
+      post_create_common
+
+      if [[ ! -d frontend ]]; then
+        echo 'Full-stack profile expects a frontend/ directory.' >&2
+        return 1
+      fi
+
+      echo 'Bootstrapping frontend dependencies with bun...'
+      (
+        cd frontend
+        bun install --frozen-lockfile
+      )
+      ;;
+    *)
+      echo "Unknown or missing post-create profile: ${profile:-<none>}" >&2
+      echo 'Expected one of: python, full-stack' >&2
+      return 2
+      ;;
+  esac
+}
+
+post_attach() {
+  if [[ "${DEVCONTAINER_CI:-}" == "true" ]]; then
+    echo 'Skipping private Codex plugin setup in CI.'
+    return 0
+  fi
+
+  if ! curl -fsSL https://setup.techletes.ai/setup-codex.sh | bash; then
+    echo 'Codex plugin setup failed; continuing without it.' >&2
+  fi
+}
+
 case "${1:-doctor}" in
   doctor)
     doctor
@@ -103,6 +171,13 @@ case "${1:-doctor}" in
     ;;
   git-setup)
     git_setup
+    ;;
+  post-create)
+    shift
+    post_create "${1:-}"
+    ;;
+  post-attach)
+    post_attach
     ;;
   -h|--help|help)
     usage
