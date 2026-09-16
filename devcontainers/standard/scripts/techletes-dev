@@ -97,7 +97,7 @@ git_setup() {
   echo 'Applied Techletes repository-local Git defaults.'
 }
 
-post_create_common() {
+post_create_python_dependencies() {
   echo 'Bootstrapping the container workspace with uv...'
   uv sync --locked
   uv tool install graphifyy
@@ -105,7 +105,9 @@ post_create_common() {
   if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     uv run pre-commit install --install-hooks
   fi
+}
 
+post_create_finalize() {
   if ! uv run python -c "import ipykernel" >/dev/null 2>&1; then
     echo 'Notebook execution uses the local Python environment and needs ipykernel available there.'
   fi
@@ -124,13 +126,14 @@ post_create() {
 
   case "${profile}" in
     python)
-      post_create_common
+      post_create_python_dependencies
+      post_create_finalize
       ;;
     full-stack)
       sudo install -d -o "$(id -u)" -g "$(id -g)" /app/uploads
       echo 'Ensured /app/uploads exists for local file storage.'
 
-      post_create_common
+      post_create_python_dependencies
 
       if [[ ! -d frontend ]]; then
         echo 'Full-stack profile expects a frontend/ directory.' >&2
@@ -142,6 +145,8 @@ post_create() {
         cd frontend
         bun install --frozen-lockfile
       )
+
+      post_create_finalize
       ;;
     *)
       echo "Unknown or missing post-create profile: ${profile:-<none>}" >&2
