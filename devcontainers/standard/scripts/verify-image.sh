@@ -2,6 +2,8 @@
 set -euo pipefail
 
 techletes-dev doctor
+techletes-dev help | grep -Fq 'post-create <profile>'
+techletes-dev help | grep -Fq 'post-attach'
 
 python --version 2>&1 | grep -Eq '^Python 3\.12\.'
 uv --version | grep -Fq '0.12.13'
