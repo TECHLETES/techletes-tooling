@@ -11,7 +11,8 @@ Commands:
   git-setup                 Apply Techletes repository-local Git defaults and host identity.
   post-create <profile>     Run the standard workspace bootstrap profile.
                             Profiles: python, full-stack
-  post-attach               Refresh the Techletes Codex plugin for an attached workspace.
+  post-attach <profile>     Run the standard attach profile.
+                            Profiles: python, full-stack
 EOF
 }
 
@@ -156,7 +157,7 @@ post_create() {
   esac
 }
 
-post_attach() {
+sync_codex_plugin() {
   if [[ "${DEVCONTAINER_CI:-}" == "true" ]]; then
     echo 'Skipping private Codex plugin setup in CI.'
     return 0
@@ -165,6 +166,29 @@ post_attach() {
   if ! curl -fsSL https://setup.techletes.ai/setup-codex.sh | bash; then
     echo 'Codex plugin setup failed; continuing without it.' >&2
   fi
+}
+
+post_attach() {
+  local profile="${1:-}"
+
+  case "${profile}" in
+    python)
+      sync_codex_plugin
+      ;;
+    full-stack)
+      sync_codex_plugin
+
+      if [[ -f .devcontainer/dev-services.sh ]]; then
+        echo 'Restarting local dev services...'
+        bash .devcontainer/dev-services.sh restart
+      fi
+      ;;
+    *)
+      echo "Unknown or missing post-attach profile: ${profile:-<none>}" >&2
+      echo 'Expected one of: python, full-stack' >&2
+      return 2
+      ;;
+  esac
 }
 
 case "${1:-doctor}" in
@@ -182,7 +206,8 @@ case "${1:-doctor}" in
     post_create "${1:-}"
     ;;
   post-attach)
-    post_attach
+    shift
+    post_attach "${1:-}"
     ;;
   -h|--help|help)
     usage
