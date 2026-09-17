@@ -28,6 +28,14 @@ Use [workflow selection](skills/using-superpowers/SKILL.md) for a new request,
 The [routing policy](skills/subagent-driven-development/references/model-routing.md)
 is the shared source for role selection and escalation.
 
+For codebase orientation, the global instructions prefer Graphify before broad
+search. **Normal Graphify use inside Codex does not require a separate model API
+key.** The active Codex session/subagents provide semantic extraction and code
+structure is extracted locally. Provider keys such as `OPENAI_API_KEY` are only
+needed for separate headless/CI `graphify extract` backends that call a model
+provider directly. See
+[Graphify runtime/auth notes](skills/graphify/references/runtime-auth.md).
+
 Explicit user choices and project-specific constraints override the defaults.
 This release does not rewrite application-specific plans/runbooks or historical
 progress ledgers, change authentication/permissions, or merge any PR.
