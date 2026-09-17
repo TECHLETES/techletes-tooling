@@ -60,6 +60,15 @@ reads for precise symbol/string lookups and verification. The only exceptions
 are a genuinely exact known-file/known-symbol lookup or an explicit instruction
 not to use Graphify.
 
+**Do not treat a missing external model API key as a Graphify blocker in Codex.**
+Normal `/graphify` skill usage uses the active Codex session/subagents for semantic
+extraction, while code structure is extracted locally; a code-only corpus can be
+graphed fully locally. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`,
+etc. are only prerequisites for separate headless/CI `graphify extract` backends
+that call a provider directly. If Graphify appears unavailable, check the CLI/tool
+installation and Codex multi-agent capability before asking for provider secrets.
+See [Graphify runtime/auth notes](skills/graphify/references/runtime-auth.md).
+
 Check external documentation when API behavior, versions, security, or uncertainty
 make it material; do not research familiar syntax on every edit.
 
